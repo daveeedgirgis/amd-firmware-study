@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz - AMD Study Guide</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="logo">AMD Firmware Study</h1>
+            <button class="menu-toggle" aria-label="Toggle menu">☰</button>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="firmware-arch.html">Firmware Architecture</a></li>
+                <li><a href="qa-concepts.html">QA Concepts</a></li>
+                <li><a href="programming.html">Programming</a></li>
+                <li><a href="debugging.html">Debugging</a></li>
+                <li><a href="tools.html">Tools & Systems</a></li>
+                <li><a href="interview.html">Interview Prep</a></li>
+                <li><a href="quiz.html" class="active">Quiz</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <header>
+            <h1>Knowledge Quiz</h1>
+            <p>Test your understanding of firmware verification concepts</p>
+        </header>
+
+        <div class="quiz-container">
+            <div id="quiz-container"></div>
+        </div>
+    </main>
+
+    <div class="scroll-top">↑</div>
+
+    <footer>
+        <p>AMD Firmware Verification Study Guide</p>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        // Quiz data
+        const quizData = [
+            {
+                question: "What is the correct order of the boot process?",
+                options: [
+                    "ROM → Kernel → Bootloader → OS",
+                    "ROM → Bootloader → Kernel → OS",
+                    "Bootloader → ROM → Kernel → OS",
+                    "Kernel → ROM → Bootloader → OS"
+                ],
+                correct: 1,
+                explanation: "The correct boot sequence is ROM (first code executed on power-on) → Bootloader (initializes hardware and loads kernel) → Kernel (OS initialization) → OS (full system ready)."
+            },
+            {
+                question: "What is the primary purpose of secure boot?",
+                options: [
+                    "To encrypt all firmware code",
+                    "To ensure only trusted, signed firmware executes",
+                    "To speed up the boot process",
+                    "To compress firmware images"
+                ],
+                correct: 1,
+                explanation: "Secure boot's primary purpose is to verify cryptographic signatures on firmware to ensure only trusted code executes, preventing unauthorized or malicious firmware from running."
+            },
+            {
+                question: "What does MMIO stand for?",
+                options: [
+                    "Multi-Module Input Output",
+                    "Memory-Mapped I/O",
+                    "Managed Memory Interface Operations",
+                    "Modular Memory Initialization Optimization"
+                ],
+                correct: 1,
+                explanation: "MMIO stands for Memory-Mapped I/O, a technique where hardware registers are accessed using memory addresses rather than special I/O instructions."
+            },
+            {
+                question: "Which is the slowest pre-silicon platform but provides the highest accuracy?",
+                options: [
+                    "FPGA Prototype",
+                    "Emulation",
+                    "RTL Simulation",
+                    "Silicon"
+                ],
+                correct: 2,
+                explanation: "RTL (Register Transfer Level) simulation is the slowest platform (Hz to KHz range) but provides cycle-accurate simulation with the highest accuracy to actual hardware behavior."
+            },
+            {
+                question: "What is the difference between verification and validation?",
+                options: [
+                    "There is no difference, they are the same thing",
+                    "Verification = 'Are we building the product right?', Validation = 'Are we building the right product?'",
+                    "Verification is for hardware, validation is for software",
+                    "Validation happens before verification"
+                ],
+                correct: 1,
+                explanation: "Verification checks if the implementation meets specifications ('building the product right'), while validation ensures the product meets user needs ('building the right product')."
+            },
+            {
+                question: "Why is the 'volatile' keyword important when accessing hardware registers in C?",
+                options: [
+                    "It makes the code run faster",
+                    "It prevents the compiler from caching the value and forces memory reads",
+                    "It marks the variable as read-only",
+                    "It enables automatic error checking"
+                ],
+                correct: 1,
+                explanation: "The 'volatile' keyword tells the compiler the value can change unexpectedly (e.g., by hardware), preventing optimizations that cache the value and ensuring every access actually reads from memory."
+            },
+            {
+                question: "What is the primary advantage of emulation over RTL simulation?",
+                options: [
+                    "Higher accuracy",
+                    "Lower cost",
+                    "Much faster execution speed",
+                    "Easier to set up"
+                ],
+                correct: 2,
+                explanation: "Emulation uses FPGA-based hardware acceleration to run much faster (MHz range) than RTL simulation (Hz-KHz), enabling booting of operating systems and running complex software."
+            },
+            {
+                question: "In the STAR method for behavioral interviews, what does the 'R' stand for?",
+                options: [
+                    "Reason",
+                    "Result",
+                    "Response",
+                    "Requirement"
+                ],
+                correct: 1,
+                explanation: "STAR stands for Situation, Task, Action, Result. The Result describes the outcome of your actions and ideally includes quantifiable impact."
+            },
+            {
+                question: "What is a common symptom of a race condition in firmware?",
+                options: [
+                    "Code always fails in the same way",
+                    "Works in simulation but fails on faster platforms",
+                    "Compile errors",
+                    "High power consumption"
+                ],
+                correct: 1,
+                explanation: "Race conditions are timing-dependent and often work in slow simulation but fail when executed faster on emulation or silicon, where the timing relationships change."
+            },
+            {
+                question: "Which testing strategy deliberately introduces errors to test robustness?",
+                options: [
+                    "Positive testing",
+                    "Regression testing",
+                    "Fault injection",
+                    "Boundary testing"
+                ],
+                correct: 2,
+                explanation: "Fault injection deliberately introduces errors (corrupted data, simulated hardware failures) to verify the system handles error conditions gracefully."
+            },
+            {
+                question: "What is DDR training?",
+                options: [
+                    "Teaching engineers about DDR memory",
+                    "The process of calibrating timing for DDR memory access",
+                    "Selecting the DDR memory type",
+                    "Cleaning DDR memory modules"
+                ],
+                correct: 1,
+                explanation: "DDR training is the calibration process during initialization that aligns timing for reads and writes (write leveling, read leveling, etc.) to ensure reliable memory access."
+            },
+            {
+                question: "What does code coverage measure?",
+                options: [
+                    "How many bugs were found",
+                    "How fast the code runs",
+                    "Percentage of code executed during testing",
+                    "Number of test cases written"
+                ],
+                correct: 2,
+                explanation: "Code coverage measures the percentage of code lines, branches, or paths that are executed during testing, helping identify untested code."
+            },
+            {
+                question: "Which debug interface provides hardware-level debugging with the ability to halt CPU execution?",
+                options: [
+                    "UART",
+                    "JTAG",
+                    "Ethernet",
+                    "USB"
+                ],
+                correct: 1,
+                explanation: "JTAG (Joint Test Action Group) is a hardware debugging interface that can halt CPU execution, read/write memory and registers, and single-step through code."
+            },
+            {
+                question: "What is the purpose of a watchdog timer?",
+                options: [
+                    "To measure system performance",
+                    "To reset the system if software hangs",
+                    "To schedule tasks",
+                    "To synchronize clocks"
+                ],
+                correct: 1,
+                explanation: "A watchdog timer monitors software execution and resets the system if the software fails to 'kick' the watchdog within a timeout period, preventing system hangs."
+            },
+            {
+                question: "What is the main purpose of requirements traceability in tools like Jama?",
+                options: [
+                    "To track bugs",
+                    "To link requirements to test cases and see coverage",
+                    "To manage code versions",
+                    "To schedule meetings"
+                ],
+                correct: 1,
+                explanation: "Requirements traceability links requirements to test cases, design documents, and code, allowing you to verify all requirements are tested and track impact of changes."
+            },
+            {
+                question: "Which is NOT a typical component of a SoC?",
+                options: [
+                    "CPU cores",
+                    "Memory controller",
+                    "Mechanical hard drive",
+                    "PCIe controller"
+                ],
+                correct: 2,
+                explanation: "A mechanical hard drive is an external storage device, not an integrated component of a System-on-Chip (SoC). SoCs contain CPUs, memory controllers, I/O controllers, etc."
+            },
+            {
+                question: "In Git, what is a pull request used for?",
+                options: [
+                    "Downloading code from the repository",
+                    "Proposing changes for review before merging",
+                    "Reverting to a previous version",
+                    "Creating a new repository"
+                ],
+                correct: 1,
+                explanation: "A pull request is a mechanism to propose code changes for review. Team members can review the code, comment, request changes, and approve before merging."
+            },
+            {
+                question: "What is the typical symptom of a cache coherency issue?",
+                options: [
+                    "Compilation errors",
+                    "Incorrect data transferred between CPU and DMA/devices",
+                    "System boots too slowly",
+                    "High CPU usage"
+                ],
+                correct: 1,
+                explanation: "Cache coherency issues occur when CPU cache and main memory aren't synchronized. DMA devices read stale data from memory if the cache wasn't flushed, causing data corruption."
+            },
+            {
+                question: "What does PCIe link training establish?",
+                options: [
+                    "The software drivers to use",
+                    "The physical link speed and width",
+                    "The device's IP address",
+                    "The interrupt vectors"
+                ],
+                correct: 1,
+                explanation: "PCIe link training is a hardware-level negotiation that establishes the physical link parameters: speed (Gen 3/4/5) and width (x1/x4/x8/x16)."
+            },
+            {
+                question: "Which Python testing framework uses decorators like @pytest.fixture?",
+                options: [
+                    "unittest",
+                    "nose",
+                    "pytest",
+                    "doctest"
+                ],
+                correct: 2,
+                explanation: "pytest is a popular Python testing framework that uses decorators like @pytest.fixture for setup/teardown and @pytest.mark for test categorization."
+            }
+        ];
+
+        // Initialize quiz when page loads
+        initQuiz(quizData);
+    </script>
+</body>
+</html>

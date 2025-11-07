@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AMD Firmware Verification Study Guide</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="logo">AMD Firmware Study</h1>
+            <button class="menu-toggle" aria-label="Toggle menu">☰</button>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="firmware-arch.html">Firmware Architecture</a></li>
+                <li><a href="qa-concepts.html">QA Concepts</a></li>
+                <li><a href="programming.html">Programming</a></li>
+                <li><a href="debugging.html">Debugging</a></li>
+                <li><a href="tools.html">Tools & Systems</a></li>
+                <li><a href="interview.html">Interview Prep</a></li>
+                <li><a href="quiz.html">Quiz</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content">
+            <h1>AMD Firmware Verification Engineer</h1>
+            <p class="subtitle">Your Complete Study Guide</p>
+            <p class="description">Master the essential concepts, tools, and techniques for firmware verification at AMD</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="role-overview">
+            <h2>The Role</h2>
+            <div class="card">
+                <p>Technical lead within the firmware verification group, building infrastructure for rigorous validation of firmware across AMD SOCs. You'll work with both firmware engineering and validation teams on all aspects of verification, focusing on methodologies to drive improvements in the pre-silicon phase.</p>
+            </div>
+        </section>
+
+        <section class="study-areas">
+            <h2>Core Study Areas</h2>
+            <div class="grid">
+                <div class="card clickable" onclick="location.href='firmware-arch.html'">
+                    <div class="card-icon">🔧</div>
+                    <h3>Firmware Architecture</h3>
+                    <p>Boot flow, secure boot, MMIO, interrupt handling, debug interfaces</p>
+                    <span class="card-link">Learn more →</span>
+                </div>
+
+                <div class="card clickable" onclick="location.href='qa-concepts.html'">
+                    <div class="card-icon">✓</div>
+                    <h3>Software QA</h3>
+                    <p>Test methodologies, verification strategies, coverage, CI/CD integration</p>
+                    <span class="card-link">Learn more →</span>
+                </div>
+
+                <div class="card clickable" onclick="location.href='programming.html'">
+                    <div class="card-icon">💻</div>
+                    <h3>Programming & Scripting</h3>
+                    <p>Python, C/C++, Bash, PowerShell - automation and firmware analysis</p>
+                    <span class="card-link">Learn more →</span>
+                </div>
+
+                <div class="card clickable" onclick="location.href='debugging.html'">
+                    <div class="card-icon">🐛</div>
+                    <h3>Debugging & Simulation</h3>
+                    <p>RTL simulation, emulation, debugging approaches, common bugs</p>
+                    <span class="card-link">Learn more →</span>
+                </div>
+
+                <div class="card clickable" onclick="location.href='tools.html'">
+                    <div class="card-icon">🛠️</div>
+                    <h3>Tools & Systems</h3>
+                    <p>Jama, GitHub, Jira, SoC architecture, DDR, PCIe</p>
+                    <span class="card-link">Learn more →</span>
+                </div>
+
+                <div class="card clickable" onclick="location.href='interview.html'">
+                    <div class="card-icon">💼</div>
+                    <h3>Interview Preparation</h3>
+                    <p>Behavioral questions, example stories, technical scenarios</p>
+                    <span class="card-link">Learn more →</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="key-skills">
+            <h2>Key Responsibilities</h2>
+            <div class="card">
+                <ul class="checklist">
+                    <li>Design, develop and maintain test frameworks for firmware verification</li>
+                    <li>Verify firmware features on pre-silicon platforms (simulation & emulation)</li>
+                    <li>Develop verification requirements, test plans, and test cases</li>
+                    <li>Develop automated tools and scripts for metrics and results</li>
+                    <li>Debug and triage failures within test frameworks</li>
+                    <li>Provide guidance to junior staff</li>
+                    <li>Stay current with emerging technologies and best practices</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="quick-start">
+            <h2>Quick Start</h2>
+            <div class="grid-2">
+                <div class="card">
+                    <h3>New to Firmware?</h3>
+                    <p>Start with the Firmware Architecture section to understand boot flows, memory-mapped I/O, and basic firmware concepts.</p>
+                    <a href="firmware-arch.html" class="btn">Start Learning</a>
+                </div>
+                <div class="card">
+                    <h3>Ready to Practice?</h3>
+                    <p>Test your knowledge with interactive quizzes covering all major topics.</p>
+                    <a href="quiz.html" class="btn">Take Quiz</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="progress-tracker">
+            <h2>Your Progress</h2>
+            <div class="card">
+                <div class="progress-item">
+                    <span>Firmware Architecture</span>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+                </div>
+                <div class="progress-item">
+                    <span>Software QA Concepts</span>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+                </div>
+                <div class="progress-item">
+                    <span>Programming Skills</span>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+                </div>
+                <div class="progress-item">
+                    <span>Debugging Techniques</span>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 0%"></div></div>
+                </div>
+                <p class="progress-note">Progress is saved in your browser</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>AMD Firmware Verification Study Guide | Good luck with your interview!</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

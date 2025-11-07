@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programming & Scripting - AMD Study Guide</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="logo">AMD Firmware Study</h1>
+            <button class="menu-toggle" aria-label="Toggle menu">☰</button>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="firmware-arch.html">Firmware Architecture</a></li>
+                <li><a href="qa-concepts.html">QA Concepts</a></li>
+                <li><a href="programming.html" class="active">Programming</a></li>
+                <li><a href="debugging.html">Debugging</a></li>
+                <li><a href="tools.html">Tools & Systems</a></li>
+                <li><a href="interview.html">Interview Prep</a></li>
+                <li><a href="quiz.html">Quiz</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <header>
+            <h1>Programming & Scripting</h1>
+            <p>Essential programming skills for firmware verification automation and analysis</p>
+        </header>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Python for Test Automation</h3>
+                <p>Python is the primary language for test frameworks, log parsing, and automation.</p>
+
+                <h4>Essential Python Concepts</h4>
+                <ul class="concept-list">
+                    <li>File I/O and text processing</li>
+                    <li>Regular expressions for log parsing</li>
+                    <li>Object-oriented programming for test frameworks</li>
+                    <li>Unit testing with pytest/unittest</li>
+                    <li>Command-line argument parsing</li>
+                    <li>Subprocess management for running simulations</li>
+                </ul>
+
+                <h4>Example: Log Parser for Firmware Boot</h4>
+                <div class="code-example">
+                    <pre>
+import re
+from datetime import datetime
+
+class FirmwareLogParser:
+    def __init__(self, log_file):
+        self.log_file = log_file
+        self.boot_stages = []
+        self.errors = []
+
+    def parse(self):
+        """Parse firmware boot log and extract stages and errors"""
+        with open(self.log_file, 'r') as f:
+            for line in f:
+                # Match boot stage entries
+                stage_match = re.search(r'\[(\d+\.\d+)\]\s+BOOT:\s+(.*)', line)
+                if stage_match:
+                    timestamp = float(stage_match.group(1))
+                    stage = stage_match.group(2)
+                    self.boot_stages.append({'time': timestamp, 'stage': stage})
+
+                # Match error entries
+                error_match = re.search(r'ERROR:\s+(.*)', line)
+                if error_match:
+                    self.errors.append(error_match.group(1))
+
+        return self.boot_stages, self.errors
+
+    def get_boot_time(self):
+        """Calculate total boot time"""
+        if len(self.boot_stages) < 2:
+            return None
+        return self.boot_stages[-1]['time'] - self.boot_stages[0]['time']
+
+    def check_boot_success(self):
+        """Verify boot completed successfully"""
+        if self.errors:
+            return False
+        # Check for "Boot complete" message
+        for stage in self.boot_stages:
+            if "Boot complete" in stage['stage']:
+                return True
+        return False
+
+# Usage
+parser = FirmwareLogParser('boot.log')
+stages, errors = parser.parse()
+
+if parser.check_boot_success():
+    print(f"Boot successful in {parser.get_boot_time():.2f} seconds")
+else:
+    print(f"Boot failed with {len(errors)} errors:")
+    for error in errors:
+        print(f"  - {error}")
+                    </pre>
+                </div>
+
+                <h4>Test Framework Example with pytest</h4>
+                <div class="code-example">
+                    <pre>
+# test_firmware_features.py
+import pytest
+import subprocess
+import os
+
+class TestFirmwareFeatures:
+
+    @pytest.fixture(scope="class")
+    def simulator(self):
+        """Start simulator before tests, cleanup after"""
+        sim_process = subprocess.Popen(['./simulator', '--config', 'test_config.json'])
+        yield sim_process
+        sim_process.terminate()
+        sim_process.wait()
+
+    def test_ddr_initialization(self, simulator):
+        """Test DDR memory initialization"""
+        # Run test command
+        result = subprocess.run(
+            ['./sim_cmd', 'check_ddr_init'],
+            capture_output=True,
+            text=True
+        )
+
+        assert result.returncode == 0, "DDR init check failed"
+        assert "DDR_READY" in result.stdout
+        assert "Training complete" in result.stdout
+
+    def test_pcie_enumeration(self, simulator):
+        """Test PCIe device enumeration"""
+        result = subprocess.run(
+            ['./sim_cmd', 'check_pcie'],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+
+        assert result.returncode == 0
+        # Check that expected devices are found
+        assert "Device 00:00.0" in result.stdout
+        assert "Device 01:00.0" in result.stdout
+
+    @pytest.mark.parametrize("freq,expected_boot_time", [
+        (1000, 2.0),  # 1 GHz -> 2 sec
+        (2000, 1.0),  # 2 GHz -> 1 sec
+        (3000, 0.7),  # 3 GHz -> 0.7 sec
+    ])
+    def test_boot_time_at_frequency(self, simulator, freq, expected_boot_time):
+        """Test boot time at different CPU frequencies"""
+        result = subprocess.run(
+            ['./sim_cmd', f'set_freq={freq}', 'boot'],
+            capture_output=True,
+            text=True
+        )
+
+        # Parse boot time from output
+        match = re.search(r'Boot time: ([\d.]+)s', result.stdout)
+        assert match, "Boot time not found in output"
+
+        boot_time = float(match.group(1))
+        # Allow 10% tolerance
+        assert boot_time <= expected_boot_time * 1.1
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>C/C++ for Firmware Analysis</h3>
+                <p>Understanding firmware code and writing low-level test utilities.</p>
+
+                <h4>Key C/C++ Concepts for Firmware</h4>
+                <ul class="concept-list">
+                    <li>Pointer arithmetic and memory access</li>
+                    <li>Bitwise operations (setting/clearing register bits)</li>
+                    <li>Structs for hardware register definitions</li>
+                    <li>Volatile keyword for hardware registers</li>
+                    <li>Memory-mapped I/O patterns</li>
+                    <li>Interrupt handling</li>
+                </ul>
+
+                <h4>Example: Hardware Register Access</h4>
+                <div class="code-example">
+                    <pre>
+#include <stdint.h>
+
+// Register definitions
+#define GPIO_BASE       0xFED80000
+#define GPIO_DATA_REG   (GPIO_BASE + 0x00)
+#define GPIO_DIR_REG    (GPIO_BASE + 0x04)
+#define GPIO_INT_EN_REG (GPIO_BASE + 0x08)
+
+// Register access macros
+#define REG32(addr)     (*(volatile uint32_t *)(addr))
+#define BIT(n)          (1U << (n))
+
+// GPIO functions
+void gpio_set_direction(uint8_t pin, uint8_t direction) {
+    if (direction) {
+        // Set pin as output
+        REG32(GPIO_DIR_REG) |= BIT(pin);
+    } else {
+        // Set pin as input
+        REG32(GPIO_DIR_REG) &= ~BIT(pin);
+    }
+}
+
+void gpio_write(uint8_t pin, uint8_t value) {
+    if (value) {
+        REG32(GPIO_DATA_REG) |= BIT(pin);
+    } else {
+        REG32(GPIO_DATA_REG) &= ~BIT(pin);
+    }
+}
+
+uint8_t gpio_read(uint8_t pin) {
+    return (REG32(GPIO_DATA_REG) & BIT(pin)) ? 1 : 0;
+}
+
+void gpio_enable_interrupt(uint8_t pin) {
+    REG32(GPIO_INT_EN_REG) |= BIT(pin);
+}
+
+// Usage example
+int main() {
+    // Configure pin 5 as output
+    gpio_set_direction(5, 1);
+
+    // Turn on LED on pin 5
+    gpio_write(5, 1);
+
+    // Configure pin 3 as input with interrupt
+    gpio_set_direction(3, 0);
+    gpio_enable_interrupt(3);
+
+    return 0;
+}
+                    </pre>
+                </div>
+
+                <h4>Bitwise Operations Reference</h4>
+                <div class="code-example">
+                    <pre>
+// Common bitwise patterns in firmware
+
+// Set bit n
+value |= (1 << n);
+
+// Clear bit n
+value &= ~(1 << n);
+
+// Toggle bit n
+value ^= (1 << n);
+
+// Test if bit n is set
+if (value & (1 << n)) { /* bit is set */ }
+
+// Extract bits [7:4] from register
+bits_7_4 = (reg_value >> 4) & 0xF;
+
+// Set bits [7:4] to a value
+reg_value = (reg_value & ~(0xF << 4)) | ((new_value & 0xF) << 4);
+
+// Mask and shift pattern
+#define REG_FIELD_MASK  0x00FF0000
+#define REG_FIELD_SHIFT 16
+#define GET_FIELD(reg)  (((reg) & REG_FIELD_MASK) >> REG_FIELD_SHIFT)
+#define SET_FIELD(val)  (((val) << REG_FIELD_SHIFT) & REG_FIELD_MASK)
+                    </pre>
+                </div>
+
+                <h4>Understanding Pointers</h4>
+                <div class="code-example">
+                    <pre>
+uint32_t value = 0x12345678;
+uint32_t *ptr = &value;        // Pointer to value
+
+// Dereferencing
+*ptr = 0xABCDEF00;            // Writes to value
+
+// Pointer arithmetic
+uint32_t array[4] = {1, 2, 3, 4};
+uint32_t *p = array;          // Points to array[0]
+p++;                          // Now points to array[1]
+p += 2;                       // Now points to array[3]
+
+// Pointer to hardware register
+volatile uint32_t *reg = (volatile uint32_t *)0xFED80000;
+*reg = 0x1;                   // Write to hardware register
+
+// Function pointers (e.g., interrupt handlers)
+typedef void (*isr_func_t)(void);
+isr_func_t interrupt_handlers[256];
+
+void timer_isr(void) {
+    // Handle timer interrupt
+}
+
+// Install handler
+interrupt_handlers[32] = timer_isr;
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Bash Scripting for Automation</h3>
+                <p>Shell scripting for build automation, test orchestration, and data processing.</p>
+
+                <h4>Common Bash Patterns</h4>
+
+                <h5>Build and Run Automation</h5>
+                <div class="code-example">
+                    <pre>
+#!/bin/bash
+# build_and_test.sh - Build firmware and run tests
+
+set -e  # Exit on error
+set -u  # Error on undefined variables
+
+# Configuration
+FIRMWARE_DIR="firmware"
+BUILD_DIR="build"
+TEST_DIR="tests"
+LOG_DIR="logs"
+
+# Create directories
+mkdir -p "$BUILD_DIR" "$LOG_DIR"
+
+# Build firmware
+echo "Building firmware..."
+cd "$FIRMWARE_DIR"
+make clean
+make -j$(nproc)
+cd ..
+
+# Copy binary to build directory
+cp "$FIRMWARE_DIR/firmware.bin" "$BUILD_DIR/"
+
+# Run tests
+echo "Running tests..."
+for test in "$TEST_DIR"/*.sh; do
+    test_name=$(basename "$test" .sh)
+    echo "Running $test_name..."
+
+    if ./"$test" > "$LOG_DIR/${test_name}.log" 2>&1; then
+        echo "  ✓ PASS"
+    else
+        echo "  ✗ FAIL - see $LOG_DIR/${test_name}.log"
+        exit 1
+    fi
+done
+
+echo "All tests passed!"
+                    </pre>
+                </div>
+
+                <h5>Log Processing</h5>
+                <div class="code-example">
+                    <pre>
+#!/bin/bash
+# parse_sim_logs.sh - Extract key metrics from simulation logs
+
+LOG_FILE="$1"
+
+if [ ! -f "$LOG_FILE" ]; then
+    echo "Error: Log file not found: $LOG_FILE"
+    exit 1
+fi
+
+# Extract boot time
+boot_time=$(grep "Boot complete" "$LOG_FILE" | \
+            awk '{print $2}' | \
+            sed 's/ms//')
+
+# Count errors
+error_count=$(grep -c "ERROR" "$LOG_FILE" || true)
+
+# Count warnings
+warning_count=$(grep -c "WARNING" "$LOG_FILE" || true)
+
+# Extract memory usage
+mem_usage=$(grep "Memory usage" "$LOG_FILE" | \
+            awk '{print $3}')
+
+# Generate report
+echo "=== Simulation Report ==="
+echo "Boot time: ${boot_time}ms"
+echo "Errors: $error_count"
+echo "Warnings: $warning_count"
+echo "Memory usage: $mem_usage"
+
+# Exit with error if any errors found
+if [ "$error_count" -gt 0 ]; then
+    echo "FAILED: Errors detected"
+    exit 1
+fi
+
+echo "PASSED"
+                    </pre>
+                </div>
+
+                <h5>Parallel Test Execution</h5>
+                <div class="code-example">
+                    <pre>
+#!/bin/bash
+# run_tests_parallel.sh - Run multiple tests in parallel
+
+MAX_PARALLEL=4
+TEST_DIR="tests"
+
+# Function to run a single test
+run_test() {
+    local test=$1
+    local test_name=$(basename "$test" .py)
+    local log_file="logs/${test_name}.log"
+
+    echo "Starting $test_name..."
+    if python3 "$test" > "$log_file" 2>&1; then
+        echo "✓ $test_name PASSED"
+        return 0
+    else
+        echo "✗ $test_name FAILED"
+        return 1
+    fi
+}
+
+export -f run_test
+
+# Run tests in parallel
+find "$TEST_DIR" -name "test_*.py" | \
+    parallel -j "$MAX_PARALLEL" run_test
+
+# Check if any tests failed
+if [ $? -ne 0 ]; then
+    echo "Some tests failed!"
+    exit 1
+fi
+
+echo "All tests passed!"
+                    </pre>
+                </div>
+
+                <h4>Useful Bash Commands for Verification</h4>
+                <div class="code-example">
+                    <pre>
+# Find all error messages in logs
+grep -r "ERROR" logs/
+
+# Count occurrences of a pattern
+grep -c "Boot complete" simulation.log
+
+# Extract specific fields (e.g., column 3)
+awk '{print $3}' data.txt
+
+# Filter and process CSV data
+cat results.csv | awk -F',' '{if ($2 > 100) print $1, $2}'
+
+# Find files modified in last 24 hours
+find . -name "*.log" -mtime -1
+
+# Compare two test runs
+diff <(grep "^Test" run1.log | sort) <(grep "^Test" run2.log | sort)
+
+# Monitor log file in real-time
+tail -f simulation.log
+
+# Search for pattern across multiple files
+grep -n "memory_init" firmware/*.c
+
+# Find largest log files
+du -h logs/* | sort -rh | head -10
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>PowerShell Basics</h3>
+                <p>Windows-based test automation and system management.</p>
+
+                <h4>Key PowerShell Concepts</h4>
+                <div class="code-example">
+                    <pre>
+# Variables
+$firmwarePath = "C:\firmware\build\firmware.bin"
+$testResults = @()  # Array
+
+# Running external programs
+& "C:\tools\simulator.exe" --config test_config.xml
+
+# Parsing output
+$output = & ".\run_test.exe" | Out-String
+if ($output -match "PASS") {
+    Write-Host "Test passed" -ForegroundColor Green
+}
+
+# File operations
+Get-ChildItem -Path "logs" -Filter "*.log" | ForEach-Object {
+    $content = Get-Content $_.FullName
+    $errors = $content | Select-String -Pattern "ERROR"
+    if ($errors) {
+        Write-Host "$($_.Name): $($errors.Count) errors"
+    }
+}
+
+# CSV export
+$results = @(
+    [PSCustomObject]@{Test="boot_test"; Status="PASS"; Time=1.2}
+    [PSCustomObject]@{Test="ddr_test"; Status="PASS"; Time=0.8}
+)
+$results | Export-Csv -Path "results.csv" -NoTypeInformation
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="qa-section">
+            <h2>Common Q&A</h2>
+            <div class="card">
+                <div class="qa-item">
+                    <div class="question">
+                        How would you parse a large (multi-GB) log file efficiently in Python?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        Don't load the entire file into memory. Use iteration:
+                        <pre style="background:#f4f4f4; padding:1rem; margin-top:0.5rem;">
+with open('large_log.log', 'r') as f:
+    for line in f:  # Reads one line at a time
+        if 'ERROR' in line:
+            process_error(line)
+</pre>
+                        For more complex parsing, consider:
+                        <ul>
+                            <li>Use <code>mmap</code> for memory-mapped file access</li>
+                            <li>Process in chunks with <code>file.read(chunk_size)</code></li>
+                            <li>Use streaming parsers for structured formats (JSON, XML)</li>
+                            <li>Consider tools like <code>grep</code> or <code>awk</code> for simple filtering before Python</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        What's the difference between a pointer and a reference in C++?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        <strong>Pointer:</strong>
+                        <ul>
+                            <li>Can be null or reassigned</li>
+                            <li>Accessed with * and -> operators</li>
+                            <li>Has its own memory address</li>
+                            <li>Can do pointer arithmetic</li>
+                        </ul>
+                        <strong>Reference:</strong>
+                        <ul>
+                            <li>Must be initialized, cannot be null</li>
+                            <li>Cannot be reassigned after initialization</li>
+                            <li>Accessed like a regular variable</li>
+                            <li>Essentially an alias for another variable</li>
+                        </ul>
+                        In firmware, pointers are more common for hardware register access.
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        How do you make Bash scripts more robust and maintainable?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        Best practices:
+                        <ul>
+                            <li><code>set -e</code> - Exit on any error</li>
+                            <li><code>set -u</code> - Error on undefined variables</li>
+                            <li><code>set -o pipefail</code> - Catch errors in pipes</li>
+                            <li>Use functions to organize code</li>
+                            <li>Quote variables: <code>"$variable"</code> not <code>$variable</code></li>
+                            <li>Use <code>shellcheck</code> to find issues</li>
+                            <li>Add comments and usage documentation</li>
+                            <li>Check return codes: <code>if command; then ... fi</code></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        Why is 'volatile' important for hardware registers in C?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        The <code>volatile</code> keyword tells the compiler the value can change unexpectedly:
+                        <ul>
+                            <li>Hardware can modify the register outside of code flow</li>
+                            <li>Prevents compiler optimizations that cache register values</li>
+                            <li>Forces reads/writes to actually access memory</li>
+                        </ul>
+                        Without volatile:
+                        <pre style="background:#f4f4f4; padding:1rem; margin-top:0.5rem;">
+uint32_t *reg = (uint32_t *)0xFED80000;
+while (*reg != 0x1) { }  // Compiler might optimize this to infinite loop!
+</pre>
+                        With volatile:
+                        <pre style="background:#f4f4f4; padding:1rem;">
+volatile uint32_t *reg = (volatile uint32_t *)0xFED80000;
+while (*reg != 0x1) { }  // Compiler will always read from memory
+</pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="scroll-top">↑</div>
+
+    <footer>
+        <p>AMD Firmware Verification Study Guide</p>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        markTopicViewed('programming');
+    </script>
+</body>
+</html>

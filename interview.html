@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Preparation - AMD Study Guide</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="logo">AMD Firmware Study</h1>
+            <button class="menu-toggle" aria-label="Toggle menu">☰</button>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="firmware-arch.html">Firmware Architecture</a></li>
+                <li><a href="qa-concepts.html">QA Concepts</a></li>
+                <li><a href="programming.html">Programming</a></li>
+                <li><a href="debugging.html">Debugging</a></li>
+                <li><a href="tools.html">Tools & Systems</a></li>
+                <li><a href="interview.html" class="active">Interview Prep</a></li>
+                <li><a href="quiz.html">Quiz</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <header>
+            <h1>Interview Preparation</h1>
+            <p>Behavioral questions, technical scenarios, and example stories for your AMD interview</p>
+        </header>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Behavioral Competencies</h3>
+                <p>Based on the job description, AMD is looking for these qualities:</p>
+
+                <div class="grid-2">
+                    <div class="info-box tip">
+                        <div class="info-box-title">Collaboration</div>
+                        Working effectively with firmware engineering and verification teams
+                    </div>
+                    <div class="info-box tip">
+                        <div class="info-box-title">Initiative</div>
+                        Self-starter who readily takes initiative
+                    </div>
+                    <div class="info-box tip">
+                        <div class="info-box-title">Problem Solving</div>
+                        Creative and effective technical solutions
+                    </div>
+                    <div class="info-box tip">
+                        <div class="info-box-title">Mentorship</div>
+                        Excellent mentor, providing guidance to junior staff
+                    </div>
+                    <div class="info-box tip">
+                        <div class="info-box-title">Communication</div>
+                        Strong technical and communication skills
+                    </div>
+                    <div class="info-box tip">
+                        <div class="info-box-title">Adaptability</div>
+                        Can work independently and in fast-paced environments
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>STAR Method for Behavioral Questions</h3>
+                <p>Structure your answers using STAR: Situation, Task, Action, Result</p>
+
+                <div class="code-example">
+                    <pre>
+S - Situation: Set the context (where, when, what project)
+T - Task: Explain your responsibility or challenge
+A - Action: Describe what YOU did (be specific)
+R - Result: Share the outcome (quantify if possible)
+                    </pre>
+                </div>
+
+                <h4>Example Question: "Tell me about a difficult debugging experience"</h4>
+                <div class="info-box important">
+                    <strong>S:</strong> During my work on [project], we had an intermittent boot failure occurring about 1% of the time on our emulation platform. This was blocking our pre-silicon validation efforts.
+                    <br><br>
+                    <strong>T:</strong> I was responsible for identifying the root cause and implementing a fix. The challenge was the failure was non-deterministic and hard to reproduce.
+                    <br><br>
+                    <strong>A:</strong> I took the following approach:
+                    <ul style="margin-left: 1.5rem;">
+                        <li>Automated the test to run 1000x overnight, capturing all logs</li>
+                        <li>Wrote a Python script to compare passing vs failing logs</li>
+                        <li>Identified that failures always occurred when a specific interrupt fired during DDR initialization</li>
+                        <li>Added defensive code to mask interrupts during critical initialization sequence</li>
+                    </ul>
+                    <strong>R:</strong> The fix eliminated the intermittent failures. The team could proceed with validation, and the debugging approach I developed became a template for investigating other intermittent issues. This saved approximately 2 weeks of debug time on subsequent issues.
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Prepared Stories - Technical Scenarios</h3>
+                <p>Prepare 3-4 detailed stories covering different aspects. Here are templates:</p>
+
+                <h4>Story 1: Hard Debugging Experience</h4>
+                <div class="qa-item">
+                    <div class="question">
+                        Prepare your story (Click to expand template)
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        <strong>Questions this addresses:</strong>
+                        <ul>
+                            <li>"Tell me about a time you debugged a difficult problem"</li>
+                            <li>"Describe a challenging technical issue you resolved"</li>
+                            <li>"How do you approach debugging?"</li>
+                        </ul>
+                        <br>
+                        <strong>Your story should include:</strong>
+                        <ul>
+                            <li>What made it difficult (intermittent, no logs, unclear symptoms)</li>
+                            <li>Your systematic debugging approach</li>
+                            <li>Tools and techniques you used</li>
+                            <li>How you isolated the root cause</li>
+                            <li>The solution and verification it worked</li>
+                            <li>What you learned</li>
+                        </ul>
+                        <br>
+                        <strong>Bonus points if you can show:</strong>
+                        <ul>
+                            <li>Collaboration with others</li>
+                            <li>Creative problem-solving</li>
+                            <li>Impact on project timeline</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4>Story 2: Automation That Improved Efficiency</h4>
+                <div class="qa-item">
+                    <div class="question">
+                        Prepare your story (Click to expand template)
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        <strong>Questions this addresses:</strong>
+                        <ul>
+                            <li>"Tell me about a time you improved a process"</li>
+                            <li>"Describe automation you've implemented"</li>
+                            <li>"How do you handle repetitive tasks?"</li>
+                        </ul>
+                        <br>
+                        <strong>Your story should include:</strong>
+                        <ul>
+                            <li>The manual/inefficient process you identified</li>
+                            <li>How you recognized the opportunity for improvement</li>
+                            <li>What you automated (test execution, log analysis, reporting)</li>
+                            <li>Technologies/tools used (Python, bash, CI/CD)</li>
+                            <li>Time saved or efficiency gained (quantify!)</li>
+                            <li>Adoption by the team</li>
+                        </ul>
+                        <br>
+                        <strong>Example metrics to mention:</strong>
+                        <ul>
+                            <li>"Reduced test execution time from 4 hours to 30 minutes"</li>
+                            <li>"Eliminated 10 hours/week of manual log analysis"</li>
+                            <li>"Increased test coverage by 40%"</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4>Story 3: Cross-Team Collaboration</h4>
+                <div class="qa-item">
+                    <div class="question">
+                        Prepare your story (Click to expand template)
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        <strong>Questions this addresses:</strong>
+                        <ul>
+                            <li>"Tell me about working with a difficult teammate"</li>
+                            <li>"Describe a time you collaborated across teams"</li>
+                            <li>"How do you handle disagreements?"</li>
+                        </ul>
+                        <br>
+                        <strong>Your story should include:</strong>
+                        <ul>
+                            <li>The multi-team situation (e.g., verification + firmware + design)</li>
+                            <li>The challenge or goal requiring collaboration</li>
+                            <li>How you communicated across teams</li>
+                            <li>Any obstacles and how you overcame them</li>
+                            <li>The successful outcome</li>
+                        </ul>
+                        <br>
+                        <strong>Show these skills:</strong>
+                        <ul>
+                            <li>Communication (clear, concise, appropriate audience)</li>
+                            <li>Empathy (understanding others' constraints)</li>
+                            <li>Compromise (finding middle ground)</li>
+                            <li>Leadership (driving toward solution)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4>Story 4: Mentorship or Leadership</h4>
+                <div class="qa-item">
+                    <div class="question">
+                        Prepare your story (Click to expand template)
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        <strong>Questions this addresses:</strong>
+                        <ul>
+                            <li>"Tell me about a time you mentored someone"</li>
+                            <li>"How do you help junior team members?"</li>
+                            <li>"Describe your leadership style"</li>
+                        </ul>
+                        <br>
+                        <strong>Your story should include:</strong>
+                        <ul>
+                            <li>Who you mentored (intern, junior engineer, peer)</li>
+                            <li>What skills or knowledge you helped them develop</li>
+                            <li>Your approach to teaching/guiding</li>
+                            <li>Challenges they faced and how you helped</li>
+                            <li>Their growth and success</li>
+                        </ul>
+                        <br>
+                        <strong>Good mentorship examples:</strong>
+                        <ul>
+                            <li>Teaching testing methodology to new hire</li>
+                            <li>Code reviews with constructive feedback</li>
+                            <li>Helping debug challenging issues together</li>
+                            <li>Sharing domain knowledge (firmware architecture)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Common Behavioral Questions</h3>
+
+                <div class="qa-item">
+                    <div class="question">
+                        Why do you want to work at AMD?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        <strong>What they're looking for:</strong> Genuine interest in AMD, the role, and the industry.
+                        <br><br>
+                        <strong>Good answer structure:</strong>
+                        <ul>
+                            <li>AMD's technology leadership (Ryzen, EPYC, Radeon, data center)</li>
+                            <li>Interest in pre-silicon verification and quality</li>
+                            <li>Opportunity to work on cutting-edge SoC designs</li>
+                            <li>Culture of innovation mentioned in job posting</li>
+                            <li>Personal interest in firmware/hardware intersection</li>
+                        </ul>
+                        <br>
+                        <strong>Make it personal:</strong> Connect your experience/interests to what AMD does
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        Why are you leaving your current role?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        <strong>Keep it positive!</strong> Focus on what you're moving toward, not running from.
+                        <br><br>
+                        <strong>Good reasons:</strong>
+                        <ul>
+                            <li>Seeking new technical challenges</li>
+                            <li>Want to focus more on verification/quality</li>
+                            <li>Interested in pre-silicon work</li>
+                            <li>Opportunity for technical leadership</li>
+                            <li>Align with AMD's technology and mission</li>
+                        </ul>
+                        <br>
+                        <strong>Avoid:</strong> Badmouthing current employer, salary-only focus, "any job" desperation
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        How do you handle tight deadlines and pressure?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        <strong>Show you can handle the "fast-paced environment"</strong>
+                        <br><br>
+                        <strong>Good answer includes:</strong>
+                        <ul>
+                            <li>Prioritization (focus on critical path items first)</li>
+                            <li>Communication (keep stakeholders informed)</li>
+                            <li>Asking for help when needed</li>
+                            <li>Example of successfully delivering under pressure</li>
+                        </ul>
+                        <br>
+                        <strong>STAR example:</strong> "When we had a critical bug blocking silicon tape-out..."
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        Tell me about a time you failed
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        <strong>Show humility and learning</strong>
+                        <br><br>
+                        <strong>Structure:</strong>
+                        <ul>
+                            <li>What went wrong (be honest but not devastating)</li>
+                            <li>Your role in the failure (take ownership)</li>
+                            <li>What you learned</li>
+                            <li>How you've changed your approach since</li>
+                        </ul>
+                        <br>
+                        <strong>Good examples:</strong>
+                        <ul>
+                            <li>Missed edge case in testing → now use more systematic coverage analysis</li>
+                            <li>Underestimated task complexity → improved estimation skills</li>
+                            <li>Communication breakdown → now document and confirm more proactively</li>
+                        </ul>
+                        <br>
+                        <strong>Key:</strong> End on the positive - what you learned and improved
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        How do you stay current with technology?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        Shows you're the "motivated self-starter" who stays "up to date with emerging technologies"
+                        <br><br>
+                        <strong>Good answers:</strong>
+                        <ul>
+                            <li>Follow industry publications, conferences (Hot Chips, ISSCC)</li>
+                            <li>Read technical papers and whitepapers</li>
+                            <li>Participate in online communities</li>
+                            <li>Side projects or learning</li>
+                            <li>Internal tech talks and knowledge sharing</li>
+                        </ul>
+                        <br>
+                        <strong>Be specific:</strong> "I recently read about chiplet architectures and their impact on SoC design..."
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Technical Interview Topics</h3>
+                <p>Be prepared to discuss these technical areas in depth:</p>
+
+                <div class="grid">
+                    <div class="card">
+                        <h4>Firmware Concepts</h4>
+                        <ul class="concept-list">
+                            <li>Boot sequence</li>
+                            <li>Secure boot</li>
+                            <li>Memory-mapped I/O</li>
+                            <li>Interrupt handling</li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <h4>Verification Methodology</h4>
+                        <ul class="concept-list">
+                            <li>Test planning process</li>
+                            <li>Coverage metrics</li>
+                            <li>Directed vs random testing</li>
+                            <li>CI/CD for firmware</li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <h4>Debugging Skills</h4>
+                        <ul class="concept-list">
+                            <li>Systematic approach</li>
+                            <li>Common firmware bugs</li>
+                            <li>Debug tools (JTAG, logs)</li>
+                            <li>Root cause analysis</li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <h4>Programming</h4>
+                        <ul class="concept-list">
+                            <li>Python for automation</li>
+                            <li>C/C++ for firmware</li>
+                            <li>Bash scripting</li>
+                            <li>Pointers and registers</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4>Example Technical Questions</h4>
+                <div class="qa-item">
+                    <div class="question">
+                        How would you verify a new DDR initialization feature?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        <strong>Good answer covers:</strong>
+                        <ol>
+                            <li><strong>Understand requirements:</strong> What does the feature do? Performance targets?</li>
+                            <li><strong>Develop test plan:</strong>
+                                <ul>
+                                    <li>Positive tests: Feature works with various DDR configs</li>
+                                    <li>Negative tests: Invalid configs handled gracefully</li>
+                                    <li>Boundary tests: Min/max memory sizes, frequencies</li>
+                                    <li>Stress tests: Repeated init, power cycles</li>
+                                </ul>
+                            </li>
+                            <li><strong>Test environments:</strong> RTL sim for detailed checks, emulation for system testing</li>
+                            <li><strong>Automation:</strong> Python framework to run tests, collect results</li>
+                            <li><strong>Coverage:</strong> Verify code coverage, ensure all paths tested</li>
+                            <li><strong>Regression:</strong> Add to automated test suite</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        Explain how you would debug a system that hangs during boot
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        <strong>Systematic approach:</strong>
+                        <ol>
+                            <li><strong>Gather information:</strong> When does it hang? Always or intermittent? After which messages?</li>
+                            <li><strong>Determine last progress:</strong> Check logs, LED codes, UART output</li>
+                            <li><strong>Narrow down:</strong> Which component was executing? (Boot ROM, bootloader, OS?)</li>
+                            <li><strong>Check common causes:</strong>
+                                <ul>
+                                    <li>Infinite loop in code</li>
+                                    <li>Waiting for hardware that never responds</li>
+                                    <li>Exception/fault causing hang</li>
+                                    <li>Clock/power not enabled for next component</li>
+                                </ul>
+                            </li>
+                            <li><strong>Debug methods:</strong>
+                                <ul>
+                                    <li>Add debug prints to narrow down location</li>
+                                    <li>Check register states</li>
+                                    <li>Use JTAG to halt and inspect</li>
+                                    <li>Review recent code changes</li>
+                                </ul>
+                            </li>
+                            <li><strong>Verify fix:</strong> Test multiple times, different configs</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Questions to Ask the Interviewer</h3>
+                <p>Always have thoughtful questions prepared. Shows genuine interest!</p>
+
+                <h4>About the Role</h4>
+                <ul class="concept-list">
+                    <li>"What does a typical day look like for someone in this role?"</li>
+                    <li>"What verification platforms will I primarily work with? (simulation, emulation, FPGA?)"</li>
+                    <li>"What's the current makeup of the verification team?"</li>
+                    <li>"What are the biggest verification challenges the team is facing?"</li>
+                    <li>"How do verification and firmware teams collaborate here?"</li>
+                </ul>
+
+                <h4>About the Team/Organization</h4>
+                <ul class="concept-list">
+                    <li>"What opportunities are there for technical growth and learning?"</li>
+                    <li>"How does AMD support professional development?"</li>
+                    <li>"What's the team culture like?"</li>
+                    <li>"How does the team handle work-life balance during critical project phases?"</li>
+                </ul>
+
+                <h4>About the Technology</h4>
+                <ul class="concept-list">
+                    <li>"What SoC products will I be working on?"</li>
+                    <li>"What's the tech stack for verification? (languages, tools, frameworks)"</li>
+                    <li>"How is AMD approaching verification for future architectures?"</li>
+                    <li>"What's the silicon timeline we're working toward?"</li>
+                </ul>
+
+                <h4>About Success</h4>
+                <ul class="concept-list">
+                    <li>"What would success look like in the first 6 months?"</li>
+                    <li>"What are the key priorities for this role in the first year?"</li>
+                    <li>"How is performance evaluated?"</li>
+                </ul>
+
+                <div class="info-box tip">
+                    <div class="info-box-title">Pro Tip</div>
+                    Ask questions that show you've researched AMD and thought about the role. Avoid questions easily answered by the website or job posting.
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Interview Day Tips</h3>
+
+                <div class="grid-2">
+                    <div class="info-box important">
+                        <div class="info-box-title">Before the Interview</div>
+                        <ul>
+                            <li>Review your resume - be ready to discuss everything</li>
+                            <li>Practice STAR stories out loud</li>
+                            <li>Research recent AMD announcements</li>
+                            <li>Prepare questions to ask</li>
+                            <li>Test your tech setup (if virtual)</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-box important">
+                        <div class="info-box-title">During the Interview</div>
+                        <ul>
+                            <li>Listen carefully to the full question</li>
+                            <li>Clarify if you need to</li>
+                            <li>Think before answering (brief pause is OK)</li>
+                            <li>Be concise but thorough</li>
+                            <li>Show enthusiasm!</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-box important">
+                        <div class="info-box-title">For Technical Questions</div>
+                        <ul>
+                            <li>Talk through your thought process</li>
+                            <li>Ask clarifying questions</li>
+                            <li>Draw diagrams if helpful</li>
+                            <li>Admit when you don't know something</li>
+                            <li>Show how you'd find the answer</li>
+                        </ul>
+                    </div>
+
+                    <div class="info-box important">
+                        <div class="info-box-title">After the Interview</div>
+                        <ul>
+                            <li>Send thank you email within 24 hours</li>
+                            <li>Reference specific discussion points</li>
+                            <li>Reiterate your interest</li>
+                            <li>Follow up if you don't hear back</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="scroll-top">↑</div>
+
+    <footer>
+        <p>AMD Firmware Verification Study Guide | You've got this!</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

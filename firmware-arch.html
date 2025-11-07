@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firmware Architecture - AMD Study Guide</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="logo">AMD Firmware Study</h1>
+            <button class="menu-toggle" aria-label="Toggle menu">☰</button>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="firmware-arch.html" class="active">Firmware Architecture</a></li>
+                <li><a href="qa-concepts.html">QA Concepts</a></li>
+                <li><a href="programming.html">Programming</a></li>
+                <li><a href="debugging.html">Debugging</a></li>
+                <li><a href="tools.html">Tools & Systems</a></li>
+                <li><a href="interview.html">Interview Prep</a></li>
+                <li><a href="quiz.html">Quiz</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <header>
+            <h1>Firmware Architecture</h1>
+            <p>Understanding the fundamentals of firmware architecture, boot processes, and hardware interfaces</p>
+        </header>
+
+        <section class="topic-section" data-category="basics">
+            <div class="card">
+                <h3>Boot Process Overview</h3>
+                <p>The boot process is a critical sequence that brings a system from power-on to a running operating system.</p>
+
+                <h4>Boot Flow Stages</h4>
+                <ul class="concept-list">
+                    <li><strong>ROM (Read-Only Memory):</strong> First code that executes on power-on. Contains Boot ROM code that's immutable and hardcoded during chip manufacturing.</li>
+                    <li><strong>Bootloader:</strong> Initializes essential hardware (memory controllers, clocks), loads the next stage from storage.</li>
+                    <li><strong>Kernel:</strong> Operating system kernel initialization, device driver loading.</li>
+                    <li><strong>OS (Operating System):</strong> Full system boot, user space initialization.</li>
+                </ul>
+
+                <div class="info-box important">
+                    <div class="info-box-title">Key Concept</div>
+                    Each stage verifies and loads the next stage, creating a "chain of trust" for security.
+                </div>
+
+                <h4>Typical AMD SoC Boot Sequence</h4>
+                <div class="code-example">
+                    <pre>
+1. Power-On Reset (POR)
+   └─> On-chip Boot ROM executes
+
+2. Boot ROM
+   ├─> Initialize minimal hardware
+   ├─> Verify secure boot fuses
+   └─> Load Platform Security Processor (PSP) firmware
+
+3. PSP Firmware
+   ├─> Establish root of trust
+   ├─> Initialize security subsystem
+   └─> Verify and load UEFI/BIOS
+
+4. UEFI/BIOS
+   ├─> Initialize DDR memory
+   ├─> Initialize PCIe, SATA, USB
+   └─> Load OS bootloader
+
+5. OS Bootloader (GRUB/Windows Boot Manager)
+   └─> Load operating system kernel
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section" data-category="security">
+            <div class="card">
+                <h3>Secure Boot</h3>
+                <p>Secure boot ensures that only trusted, signed firmware can execute on the system.</p>
+
+                <h4>Components of Secure Boot</h4>
+                <ul class="concept-list">
+                    <li><strong>Fuses:</strong> One-time programmable (OTP) bits in hardware that store security configuration (e.g., public key hashes, security enables)</li>
+                    <li><strong>Signing:</strong> Cryptographic signatures (RSA/ECDSA) on firmware binaries</li>
+                    <li><strong>Trust Anchors:</strong> Root public keys stored in hardware/fuses that verify the signature chain</li>
+                    <li><strong>Chain of Trust:</strong> Each stage verifies the next before execution</li>
+                </ul>
+
+                <h4>Secure Boot Verification Process</h4>
+                <div class="code-example">
+                    <pre>
+Boot ROM contains hardcoded public key hash
+    ↓
+Verify PSP firmware signature using public key
+    ↓
+If valid → Execute PSP firmware
+If invalid → Halt boot / Enter recovery mode
+    ↓
+PSP verifies BIOS signature
+    ↓
+BIOS verifies OS bootloader (UEFI Secure Boot)
+                    </pre>
+                </div>
+
+                <div class="info-box warning">
+                    <div class="info-box-title">Testing Consideration</div>
+                    In pre-silicon environments, secure boot features must be carefully validated including signature verification, rollback protection, and fuse configurations.
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section" data-category="hardware">
+            <div class="card">
+                <h3>Memory-Mapped I/O (MMIO)</h3>
+                <p>MMIO is a method of accessing hardware registers using memory addresses.</p>
+
+                <h4>Key Concepts</h4>
+                <ul class="concept-list">
+                    <li><strong>Register Maps:</strong> Hardware modules expose configuration and status registers at specific memory addresses</li>
+                    <li><strong>Base Address Register (BAR):</strong> Starting address for a device's register space</li>
+                    <li><strong>Offset:</strong> Register location relative to base address</li>
+                    <li><strong>Endianness:</strong> Byte order (little-endian vs big-endian) for multi-byte values</li>
+                </ul>
+
+                <h4>Example: Writing to a Hardware Register</h4>
+                <div class="code-example">
+                    <pre>
+// C example of MMIO access
+#define GPIO_BASE_ADDR  0xFED80000
+#define GPIO_CONFIG_REG 0x0100
+
+volatile uint32_t *reg = (uint32_t *)(GPIO_BASE_ADDR + GPIO_CONFIG_REG);
+*reg = 0x00000001;  // Set bit 0 to enable GPIO
+
+// Reading from register
+uint32_t status = *reg;
+                    </pre>
+                </div>
+
+                <div class="info-box tip">
+                    <div class="info-box-title">Verification Tip</div>
+                    Always verify register access width (8/16/32/64-bit) and alignment requirements. Misaligned accesses can cause exceptions or silent failures.
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section" data-category="hardware">
+            <div class="card">
+                <h3>Interrupt Handling</h3>
+                <p>Interrupts allow hardware to signal the processor about events requiring attention.</p>
+
+                <h4>Interrupt Types</h4>
+                <ul class="concept-list">
+                    <li><strong>Hardware Interrupts:</strong> Generated by external devices (timers, I/O peripherals)</li>
+                    <li><strong>Software Interrupts:</strong> Triggered by software instructions (syscalls)</li>
+                    <li><strong>Exceptions:</strong> Synchronous interrupts from error conditions (divide by zero, page fault)</li>
+                </ul>
+
+                <h4>Interrupt Controller</h4>
+                <ul class="concept-list">
+                    <li><strong>APIC (Advanced Programmable Interrupt Controller):</strong> Modern x86 interrupt handling</li>
+                    <li><strong>Interrupt Vector:</strong> Number identifying specific interrupt source</li>
+                    <li><strong>Interrupt Service Routine (ISR):</strong> Handler function executed when interrupt fires</li>
+                    <li><strong>Priority Levels:</strong> Some interrupts can preempt others</li>
+                </ul>
+
+                <div class="info-box important">
+                    <div class="info-box-title">Common Bug</div>
+                    Interrupt misconfiguration: Wrong vector number, unmasked interrupt during initialization, or interrupt storm (device continuously triggering interrupts).
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section" data-category="hardware">
+            <div class="card">
+                <h3>Watchdog Timers</h3>
+                <p>Hardware timer that resets the system if software fails to "pet the dog" within a timeout period.</p>
+
+                <h4>Purpose</h4>
+                <ul class="concept-list">
+                    <li>Detect and recover from software hangs</li>
+                    <li>Ensure system doesn't remain in a frozen state</li>
+                    <li>Critical for embedded and safety-critical systems</li>
+                </ul>
+
+                <h4>Operation</h4>
+                <div class="code-example">
+                    <pre>
+// Pseudo-code for watchdog operation
+init_watchdog(timeout_ms = 5000);  // 5 second timeout
+
+while (system_running) {
+    perform_work();
+    kick_watchdog();  // Reset timer before it expires
+}
+
+// If kick_watchdog() not called within 5s → hardware reset
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section" data-category="hardware">
+            <div class="card">
+                <h3>Clocks and PLLs</h3>
+                <p>Managing system timing and frequency generation.</p>
+
+                <h4>Clock Domains</h4>
+                <ul class="concept-list">
+                    <li><strong>System Clock:</strong> Main CPU/SoC clock</li>
+                    <li><strong>Peripheral Clocks:</strong> Individual clocks for I/O devices</li>
+                    <li><strong>Memory Clock:</strong> DDR memory interface clock</li>
+                </ul>
+
+                <h4>PLL (Phase-Locked Loop)</h4>
+                <ul class="concept-list">
+                    <li>Generates high-frequency clocks from a reference oscillator</li>
+                    <li>Allows frequency multiplication and division</li>
+                    <li>Must be properly configured and locked before system operation</li>
+                </ul>
+
+                <div class="info-box warning">
+                    <div class="info-box-title">Verification Point</div>
+                    Clock initialization order matters! Peripherals should not access their registers before their clocks are enabled and stable.
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section" data-category="debug">
+            <div class="card">
+                <h3>Debug Interfaces</h3>
+                <p>Hardware interfaces used for debugging firmware during development and verification.</p>
+
+                <h4>UART (Universal Asynchronous Receiver/Transmitter)</h4>
+                <ul class="concept-list">
+                    <li>Serial communication protocol for debug logging</li>
+                    <li>Simple, widely supported, low-overhead</li>
+                    <li>Typically used for console output and early boot messages</li>
+                    <li>Configuration: baud rate (e.g., 115200), parity, stop bits</li>
+                </ul>
+
+                <h4>JTAG (Joint Test Action Group)</h4>
+                <ul class="concept-list">
+                    <li>Hardware debugging and boundary scan interface</li>
+                    <li>Allows reading/writing memory and registers</li>
+                    <li>Can halt CPU execution and single-step through code</li>
+                    <li>Used with debuggers like OpenOCD, Lauterbach</li>
+                </ul>
+
+                <h4>ICE (In-Circuit Emulator)</h4>
+                <ul class="concept-list">
+                    <li>Advanced debugging tool that provides real-time trace</li>
+                    <li>Can capture instruction execution history</li>
+                    <li>Useful for debugging timing-sensitive issues</li>
+                </ul>
+
+                <div class="info-box tip">
+                    <div class="info-box-title">Pre-Silicon Debugging</div>
+                    In simulation environments, you'll use waveform viewers and simulation logs instead of hardware debug interfaces. Understanding the mapping between hardware and simulation debug methods is crucial.
+                </div>
+            </div>
+        </section>
+
+        <section class="qa-section">
+            <h2>Common Q&A</h2>
+            <div class="card">
+                <div class="qa-item">
+                    <div class="question">
+                        What happens if secure boot verification fails?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        The system typically halts the boot process to prevent execution of unsigned/untrusted code. Depending on the implementation, it may:
+                        <ul>
+                            <li>Enter a recovery mode allowing reflash via a secure mechanism</li>
+                            <li>Display an error code via LED or debug port</li>
+                            <li>Completely halt requiring a hardware recovery procedure</li>
+                        </ul>
+                        This is a critical security feature that prevents unauthorized firmware from running.
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        How do you verify firmware correctly initializes DDR memory?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        DDR initialization verification involves multiple steps:
+                        <ul>
+                            <li>Check memory controller configuration registers (timing, voltage, mode)</li>
+                            <li>Verify training sequences complete successfully (write leveling, read leveling)</li>
+                            <li>Run memory tests (pattern writes/reads, stress tests)</li>
+                            <li>Validate error correction (ECC) if enabled</li>
+                            <li>Monitor for correct access patterns in waveforms (simulation)</li>
+                        </ul>
+                        Incorrect DDR init is a common source of early boot failures.
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        What's the difference between little-endian and big-endian?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        Endianness defines byte order for multi-byte values:
+                        <br><br>
+                        <strong>Little-Endian:</strong> Least significant byte at lowest address (x86/AMD uses this)
+                        <br>Value 0x12345678 stored as: [78] [56] [34] [12]
+                        <br><br>
+                        <strong>Big-Endian:</strong> Most significant byte at lowest address (network protocols, some ARM)
+                        <br>Value 0x12345678 stored as: [12] [34] [56] [78]
+                        <br><br>
+                        This matters when accessing hardware registers, reading firmware images, or communicating between systems with different endianness.
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        How do interrupts work at the hardware level?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        When a hardware device needs CPU attention:
+                        <ul>
+                            <li>Device asserts an interrupt line (physical signal to interrupt controller)</li>
+                            <li>Interrupt controller determines priority and vector number</li>
+                            <li>CPU finishes current instruction, saves context (registers, PC)</li>
+                            <li>CPU looks up Interrupt Service Routine (ISR) address from interrupt vector table</li>
+                            <li>ISR executes, handles the event, acknowledges interrupt</li>
+                            <li>CPU restores context and resumes previous execution</li>
+                        </ul>
+                        Proper interrupt handling is critical for system responsiveness and stability.
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="scroll-top">↑</div>
+
+    <footer>
+        <p>AMD Firmware Verification Study Guide</p>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        // Mark topic as viewed for progress tracking
+        markTopicViewed('firmware');
+    </script>
+</body>
+</html>

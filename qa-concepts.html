@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Software QA Concepts - AMD Study Guide</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="logo">AMD Firmware Study</h1>
+            <button class="menu-toggle" aria-label="Toggle menu">☰</button>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="firmware-arch.html">Firmware Architecture</a></li>
+                <li><a href="qa-concepts.html" class="active">QA Concepts</a></li>
+                <li><a href="programming.html">Programming</a></li>
+                <li><a href="debugging.html">Debugging</a></li>
+                <li><a href="tools.html">Tools & Systems</a></li>
+                <li><a href="interview.html">Interview Prep</a></li>
+                <li><a href="quiz.html">Quiz</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <header>
+            <h1>Software QA Concepts</h1>
+            <p>Verification methodologies, test planning, and quality assurance best practices</p>
+        </header>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Firmware Verification Workflow</h3>
+                <p>A structured approach to ensuring firmware quality through systematic verification.</p>
+
+                <h4>The Verification Process</h4>
+                <div class="code-example">
+                    <pre>
+1. Requirements Analysis
+   └─> Gather functional and non-functional requirements
+
+2. Test Planning
+   ├─> Define test strategy
+   ├─> Identify test environments (simulation, emulation, silicon)
+   └─> Resource allocation
+
+3. Test Case Development
+   ├─> Write detailed test cases
+   ├─> Implement test automation
+   └─> Create test data/fixtures
+
+4. Test Execution
+   ├─> Run tests on target platforms
+   ├─> Log results
+   └─> Monitor coverage
+
+5. Defect Management
+   ├─> Log bugs with reproduction steps
+   ├─> Triage and prioritize
+   └─> Verify fixes
+
+6. Regression Testing
+   └─> Continuously validate no new issues introduced
+                    </pre>
+                </div>
+
+                <div class="info-box important">
+                    <div class="info-box-title">Key Responsibility</div>
+                    You'll be developing verification requirements, test plans, and test cases by collaborating with firmware engineering and verification teams.
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Test Case Design</h3>
+                <p>Effective test cases are specific, repeatable, and traceable to requirements.</p>
+
+                <h4>Components of a Good Test Case</h4>
+                <ul class="concept-list">
+                    <li><strong>Test ID:</strong> Unique identifier for tracking</li>
+                    <li><strong>Requirement Traceability:</strong> Links to specific requirement(s)</li>
+                    <li><strong>Preconditions:</strong> System state before test</li>
+                    <li><strong>Test Steps:</strong> Clear, numbered steps to execute</li>
+                    <li><strong>Expected Results:</strong> What should happen at each step</li>
+                    <li><strong>Actual Results:</strong> What actually happened (filled during execution)</li>
+                    <li><strong>Pass/Fail Criteria:</strong> Objective determination of success</li>
+                </ul>
+
+                <h4>Example Test Case</h4>
+                <div class="code-example">
+                    <pre>
+Test ID: TC_BOOT_001
+Requirement: REQ_BOOT_SEC_001 (Secure boot verification)
+Priority: High
+Platform: Emulation
+
+Preconditions:
+- Device fused with production keys
+- Firmware image signed with valid key
+
+Test Steps:
+1. Power on the device
+2. Monitor boot ROM execution
+3. Observe PSP firmware load attempt
+4. Check signature verification step
+
+Expected Results:
+1. Boot ROM executes from reset vector
+2. PSP firmware loaded into secure memory
+3. Signature verification returns PASS
+4. System proceeds to next boot stage
+
+Pass Criteria:
+- All expected results match actual results
+- Boot completes within 2 seconds
+- No security violations logged
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Testing Types and Strategies</h3>
+
+                <h4>Positive Testing</h4>
+                <p>Verify the system behaves correctly with valid inputs and normal conditions.</p>
+                <ul class="concept-list">
+                    <li>Test expected user workflows</li>
+                    <li>Validate correct functionality with valid data</li>
+                    <li>Example: Boot with properly signed firmware</li>
+                </ul>
+
+                <h4>Negative Testing</h4>
+                <p>Verify the system handles invalid inputs and error conditions gracefully.</p>
+                <ul class="concept-list">
+                    <li>Test with invalid inputs</li>
+                    <li>Verify error handling and recovery</li>
+                    <li>Example: Boot with corrupted firmware, missing signature</li>
+                </ul>
+
+                <h4>Boundary Testing</h4>
+                <p>Test at the edges of acceptable input ranges.</p>
+                <ul class="concept-list">
+                    <li>Minimum and maximum values</li>
+                    <li>Just above and below limits</li>
+                    <li>Example: Test memory initialization with smallest/largest supported DDR sizes</li>
+                </ul>
+
+                <h4>Stress Testing</h4>
+                <p>Push the system beyond normal operating conditions.</p>
+                <ul class="concept-list">
+                    <li>High load, maximum frequency</li>
+                    <li>Extended duration testing</li>
+                    <li>Example: Run 1000 consecutive boot cycles</li>
+                </ul>
+
+                <h4>Fault Injection</h4>
+                <p>Deliberately introduce errors to test robustness.</p>
+                <ul class="concept-list">
+                    <li>Simulate hardware failures</li>
+                    <li>Corrupt data in flight</li>
+                    <li>Example: Flip bits in firmware image, simulate I/O errors</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Test Coverage</h3>
+                <p>Measuring how thoroughly the system is tested.</p>
+
+                <h4>Types of Coverage</h4>
+                <ul class="concept-list">
+                    <li><strong>Functional Coverage:</strong> Percentage of features/requirements tested</li>
+                    <li><strong>Code Coverage:</strong> Percentage of code lines executed during testing
+                        <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+                            <li>Line coverage: Which lines executed?</li>
+                            <li>Branch coverage: Which decision paths taken?</li>
+                            <li>Path coverage: Which complete paths through code?</li>
+                        </ul>
+                    </li>
+                    <li><strong>Scenario Coverage:</strong> Real-world use case combinations tested</li>
+                </ul>
+
+                <div class="info-box tip">
+                    <div class="info-box-title">Coverage Goals</div>
+                    While 100% code coverage is rarely achievable or necessary, critical paths (boot, security, error handling) should have very high coverage (>95%). Use coverage tools to identify untested code.
+                </div>
+
+                <h4>Measuring Code Coverage in Firmware</h4>
+                <div class="code-example">
+                    <pre>
+# Example using gcov for C code coverage
+gcc -fprofile-arcs -ftest-coverage firmware.c -o firmware
+./firmware  # Run tests
+gcov firmware.c  # Generate coverage report
+
+# Output shows:
+File 'firmware.c'
+Lines executed: 87.5% of 240
+Branches executed: 82.3% of 156
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Directed vs Random Testing</h3>
+
+                <h4>Directed Testing</h4>
+                <p>Manually created tests targeting specific functionality.</p>
+                <ul class="concept-list">
+                    <li><strong>Pros:</strong> Precise control, targeted scenarios, easier to debug</li>
+                    <li><strong>Cons:</strong> Time-consuming to create, may miss corner cases</li>
+                    <li><strong>Use when:</strong> Testing specific features, known scenarios, security validation</li>
+                </ul>
+
+                <h4>Random/Constrained-Random Testing</h4>
+                <p>Automatically generated tests with random inputs within constraints.</p>
+                <ul class="concept-list">
+                    <li><strong>Pros:</strong> Finds unexpected bugs, broader coverage, less manual effort</li>
+                    <li><strong>Cons:</strong> Harder to reproduce failures, may generate invalid scenarios</li>
+                    <li><strong>Use when:</strong> Looking for corner cases, stress testing, regression</li>
+                </ul>
+
+                <div class="info-box important">
+                    <div class="info-box-title">Best Practice</div>
+                    Use a combination: Directed tests for critical paths and known scenarios, random tests for discovering unexpected issues. This hybrid approach provides the best coverage.
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Regression Testing & Automation</h3>
+                <p>Continuously validating that new changes don't break existing functionality.</p>
+
+                <h4>Regression Management</h4>
+                <ul class="concept-list">
+                    <li>Maintain a suite of tests covering all features</li>
+                    <li>Run automatically on every code change</li>
+                    <li>Track test results over time to identify flaky tests</li>
+                    <li>Triage failures: new bug vs existing issue vs infrastructure problem</li>
+                </ul>
+
+                <h4>CI/CD Integration</h4>
+                <p>Continuous Integration ensures tests run automatically on code commits.</p>
+                <div class="code-example">
+                    <pre>
+# Example GitHub Actions workflow
+name: Firmware CI
+
+on: [push, pull_request]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build firmware
+        run: make build
+      - name: Run unit tests
+        run: make test
+      - name: Run simulation tests
+        run: ./run_sim_tests.sh
+      - name: Upload coverage
+        run: codecov -f coverage.xml
+      - name: Archive test logs
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-results
+          path: test_logs/
+                    </pre>
+                </div>
+
+                <div class="info-box tip">
+                    <div class="info-box-title">Jenkins Alternative</div>
+                    Many AMD teams use Jenkins for CI. The workflow is similar: trigger on commit, build, test, report results. Learn both Jenkins and GitHub Actions concepts.
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Test Automation Best Practices</h3>
+
+                <h4>Key Principles</h4>
+                <ul class="concept-list">
+                    <li><strong>Maintainability:</strong> Write clean, documented code for tests</li>
+                    <li><strong>Reusability:</strong> Create libraries and frameworks for common operations</li>
+                    <li><strong>Reliability:</strong> Tests should pass/fail consistently</li>
+                    <li><strong>Speed:</strong> Optimize for fast execution to enable frequent runs</li>
+                    <li><strong>Isolation:</strong> Tests shouldn't depend on execution order</li>
+                </ul>
+
+                <h4>Example: Python Test Framework Structure</h4>
+                <div class="code-example">
+                    <pre>
+# test_boot_sequence.py
+import pytest
+from firmware_test_lib import FirmwareSimulator
+
+class TestBootSequence:
+    @pytest.fixture
+    def sim(self):
+        """Setup simulator before each test"""
+        sim = FirmwareSimulator()
+        sim.load_firmware("firmware.bin")
+        yield sim
+        sim.cleanup()
+
+    def test_secure_boot_valid_signature(self, sim):
+        """Test boot with valid firmware signature"""
+        sim.set_fuses(secure_boot=True)
+        result = sim.run_until_bootloader()
+
+        assert result.boot_rom_status == "PASS"
+        assert result.signature_verified == True
+        assert result.boot_time_ms < 2000
+
+    def test_secure_boot_invalid_signature(self, sim):
+        """Test boot rejects invalid signature"""
+        sim.set_fuses(secure_boot=True)
+        sim.corrupt_firmware_signature()
+        result = sim.run_boot()
+
+        assert result.boot_rom_status == "FAIL"
+        assert "SIGNATURE_VERIFY_ERROR" in result.error_log
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Metrics and Reporting</h3>
+                <p>Track and communicate testing progress and quality.</p>
+
+                <h4>Important Metrics</h4>
+                <ul class="concept-list">
+                    <li><strong>Test Pass Rate:</strong> Percentage of tests passing</li>
+                    <li><strong>Code Coverage:</strong> Percentage of code exercised</li>
+                    <li><strong>Defect Density:</strong> Bugs found per KLOC (thousand lines of code)</li>
+                    <li><strong>Test Execution Time:</strong> How long regression takes</li>
+                    <li><strong>Mean Time To Detect (MTTD):</strong> How quickly bugs are found</li>
+                    <li><strong>Mean Time To Resolve (MTTR):</strong> How quickly bugs are fixed</li>
+                </ul>
+
+                <h4>Automation for Metrics</h4>
+                <div class="code-example">
+                    <pre>
+# Python script to parse and report test results
+import json
+
+def generate_test_report(test_results_file):
+    with open(test_results_file) as f:
+        results = json.load(f)
+
+    total = len(results['tests'])
+    passed = sum(1 for t in results['tests'] if t['status'] == 'PASS')
+    failed = sum(1 for t in results['tests'] if t['status'] == 'FAIL')
+
+    report = {
+        'total_tests': total,
+        'passed': passed,
+        'failed': failed,
+        'pass_rate': f"{(passed/total)*100:.1f}%",
+        'execution_time': results['execution_time_sec']
+    }
+
+    print(json.dumps(report, indent=2))
+    return report
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="qa-section">
+            <h2>Common Q&A</h2>
+            <div class="card">
+                <div class="qa-item">
+                    <div class="question">
+                        How do you prioritize which tests to automate first?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        Prioritize automation based on:
+                        <ul>
+                            <li><strong>Frequency:</strong> Tests run often (regression suite) → automate first</li>
+                            <li><strong>Criticality:</strong> Core functionality and security features</li>
+                            <li><strong>Stability:</strong> Features that change infrequently are easier to maintain</li>
+                            <li><strong>ROI:</strong> Time saved vs time to implement automation</li>
+                        </ul>
+                        Start with smoke tests (basic functionality checks), then expand to full regression suite.
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        What's the difference between verification and validation?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        <strong>Verification:</strong> "Are we building the product right?" - Does the implementation meet specifications?
+                        <br><br>
+                        <strong>Validation:</strong> "Are we building the right product?" - Does the product meet user needs?
+                        <br><br>
+                        In firmware: Verification checks if code matches requirements. Validation ensures the firmware solves the actual problem (boots the system, provides needed features).
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        How do you handle flaky tests?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        Flaky tests (passing/failing inconsistently) undermine trust in the test suite:
+                        <ul>
+                            <li><strong>Identify:</strong> Track test history, flag tests with inconsistent results</li>
+                            <li><strong>Root cause:</strong> Race conditions, timing dependencies, insufficient waits, environmental issues</li>
+                            <li><strong>Fix:</strong> Add proper synchronization, increase timeouts, improve test isolation</li>
+                            <li><strong>Quarantine:</strong> Temporarily disable while fixing, to keep regression suite reliable</li>
+                        </ul>
+                        Never ignore flaky tests - they often indicate real issues in the code or test environment.
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        How would you test a watchdog timer in firmware?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        Test cases for watchdog timer:
+                        <ul>
+                            <li><strong>Basic operation:</strong> Configure watchdog, kick regularly, verify no reset</li>
+                            <li><strong>Timeout detection:</strong> Stop kicking, verify reset occurs within timeout window</li>
+                            <li><strong>Timing accuracy:</strong> Measure actual timeout vs configured value</li>
+                            <li><strong>Edge cases:</strong> Kick just before expiration, configure with min/max timeout values</li>
+                            <li><strong>Disable/Enable:</strong> Verify watchdog can be enabled/disabled correctly</li>
+                        </ul>
+                        In simulation, you can speed up time to make timeout tests run quickly.
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="scroll-top">↑</div>
+
+    <footer>
+        <p>AMD Firmware Verification Study Guide</p>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        markTopicViewed('qa');
+    </script>
+</body>
+</html>

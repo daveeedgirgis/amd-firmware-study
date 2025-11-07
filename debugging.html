@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debugging & Simulation - AMD Study Guide</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="logo">AMD Firmware Study</h1>
+            <button class="menu-toggle" aria-label="Toggle menu">☰</button>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="firmware-arch.html">Firmware Architecture</a></li>
+                <li><a href="qa-concepts.html">QA Concepts</a></li>
+                <li><a href="programming.html">Programming</a></li>
+                <li><a href="debugging.html" class="active">Debugging</a></li>
+                <li><a href="tools.html">Tools & Systems</a></li>
+                <li><a href="interview.html">Interview Prep</a></li>
+                <li><a href="quiz.html">Quiz</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <header>
+            <h1>Debugging & Simulation</h1>
+            <p>Pre-silicon platforms, debugging techniques, and common firmware bugs</p>
+        </header>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Pre-Silicon Platforms</h3>
+                <p>Firmware verification happens across different platforms before silicon is available.</p>
+
+                <h4>RTL Simulation</h4>
+                <ul class="concept-list">
+                    <li><strong>What it is:</strong> Software simulation of hardware at Register Transfer Level</li>
+                    <li><strong>Speed:</strong> Very slow (Hz to KHz range) - cycle-accurate simulation</li>
+                    <li><strong>Accuracy:</strong> Highest - exact hardware behavior including timing</li>
+                    <li><strong>Use cases:</strong> Early firmware development, detailed debugging, corner cases</li>
+                    <li><strong>Tools:</strong> Synopsys VCS, Cadence Xcelium, Mentor Questa</li>
+                </ul>
+
+                <div class="info-box tip">
+                    <div class="info-box-title">Speed Comparison</div>
+                    RTL simulation: 1 Hz - 10 KHz<br>
+                    Emulation: 1-10 MHz<br>
+                    Real silicon: GHz
+                </div>
+
+                <h4>Emulation</h4>
+                <ul class="concept-list">
+                    <li><strong>What it is:</strong> Hardware accelerated simulation using FPGA-based systems</li>
+                    <li><strong>Speed:</strong> Much faster than RTL sim - near real-time for some workloads</li>
+                    <li><strong>Accuracy:</strong> Very high - close to actual silicon behavior</li>
+                    <li><strong>Use cases:</strong> Booting OS, running complex software, performance testing</li>
+                    <li><strong>Tools:</strong> Synopsys ZeBu, Cadence Palladium, Mentor Veloce</li>
+                </ul>
+
+                <h4>FPGA Prototypes</h4>
+                <ul class="concept-list">
+                    <li><strong>What it is:</strong> Actual design mapped onto FPGAs</li>
+                    <li><strong>Speed:</strong> 10-100 MHz - much faster than emulation</li>
+                    <li><strong>Accuracy:</strong> Good, but some timing differences from silicon</li>
+                    <li><strong>Use cases:</strong> Software development, system validation, demos</li>
+                </ul>
+
+                <div class="code-example">
+                    <pre>
+Platform Selection Guide:
+
+Early Design → RTL Simulation
+├─> Verify basic functionality
+├─> Debug hardware/firmware interaction
+└─> Limited test coverage (too slow for exhaustive testing)
+
+Pre-Silicon Validation → Emulation
+├─> Boot operating system
+├─> Run full test suites
+└─> Performance characterization
+
+Software Development → FPGA Prototype
+├─> Develop drivers and applications
+├─> System-level testing
+└─> Customer demos
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Debugging Approach</h3>
+                <p>Systematic methodology for investigating firmware failures.</p>
+
+                <h4>Step-by-Step Debugging Process</h4>
+                <ol style="margin-left: 2rem; line-height: 2;">
+                    <li><strong>Reproduce:</strong> Consistently trigger the failure</li>
+                    <li><strong>Isolate:</strong> Narrow down to specific component/feature</li>
+                    <li><strong>Compare:</strong> Find differences between passing and failing cases</li>
+                    <li><strong>Hypothesize:</strong> Form theory about root cause</li>
+                    <li><strong>Test:</strong> Verify hypothesis with targeted experiments</li>
+                    <li><strong>Fix:</strong> Implement solution</li>
+                    <li><strong>Verify:</strong> Ensure fix works and doesn't break other things</li>
+                </ol>
+
+                <h4>Debugging Techniques</h4>
+
+                <h5>1. Log Analysis</h5>
+                <div class="code-example">
+                    <pre>
+# Compare passing vs failing logs
+diff passing_boot.log failing_boot.log
+
+# Look for error messages
+grep -i "error\|fail\|abort" firmware.log
+
+# Check for timing differences
+awk '{print $1}' boot.log  # Extract timestamps
+
+# Find where execution diverges
+# Last common message before failure indicates problem area
+                    </pre>
+                </div>
+
+                <h5>2. Register State Inspection</h5>
+                <ul class="concept-list">
+                    <li>Read key register values at failure point</li>
+                    <li>Compare register state in passing vs failing scenarios</li>
+                    <li>Check for unexpected values (e.g., 0x0, 0xFFFFFFFF indicating uninitialized/corrupted)</li>
+                </ul>
+
+                <h5>3. Waveform Analysis (RTL Simulation)</h5>
+                <ul class="concept-list">
+                    <li>Use waveform viewers (DVE, Verdi, SimVision) to see signal transitions</li>
+                    <li>Trace signal from source to destination</li>
+                    <li>Check for timing violations, glitches, unexpected values</li>
+                    <li>Verify state machine transitions</li>
+                </ul>
+
+                <h5>4. Assertions and Checkers</h5>
+                <div class="code-example">
+                    <pre>
+// Example SystemVerilog assertions
+assert property (@(posedge clk) req |-> ##[1:3] ack)
+  else $error("Acknowledge not received within 3 cycles");
+
+// C firmware assertions
+#define ASSERT(expr) \
+    if (!(expr)) { \
+        log_error("Assertion failed: " #expr); \
+        while(1); /* Halt */ \
+    }
+
+// Usage
+ASSERT(ddr_controller->status == DDR_READY);
+                    </pre>
+                </div>
+
+                <div class="info-box warning">
+                    <div class="info-box-title">Pre-Silicon Challenge</div>
+                    Debug visibility is limited compared to hardware debuggers. Use logging extensively, add debug ports in design, and leverage simulation-specific features like waveform dumps.
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Common Firmware Bugs</h3>
+                <p>Understanding typical issues helps you debug faster and write better tests.</p>
+
+                <h4>1. Incorrect Register Offset</h4>
+                <div class="code-example">
+                    <pre>
+// Bug: Wrong offset
+#define GPIO_DATA_REG  0x00
+#define GPIO_DIR_REG   0x04
+volatile uint32_t *gpio_dir = (uint32_t *)(GPIO_BASE + 0x08); // Wrong!
+
+// Symptom: Configuration doesn't take effect
+// Debug: Check register map documentation, verify offsets
+                    </pre>
+                </div>
+
+                <h4>2. Driver Initialization Ordering</h4>
+                <div class="code-example">
+                    <pre>
+// Bug: Using device before initialization complete
+void init_system() {
+    enable_ddr_controller();  // Starts init but doesn't wait
+    memset(ddr_buffer, 0, SIZE);  // WRONG: DDR not ready!
+}
+
+// Fix: Wait for ready status
+void init_system() {
+    enable_ddr_controller();
+    while (!(DDR_STATUS_REG & DDR_READY_BIT));  // Wait
+    memset(ddr_buffer, 0, SIZE);  // OK now
+}
+
+// Symptom: Intermittent failures, hangs
+// Debug: Check initialization sequence, add ready checks
+                    </pre>
+                </div>
+
+                <h4>3. Cache Coherency Issues</h4>
+                <div class="code-example">
+                    <pre>
+// Bug: DMA sees stale data because cache not flushed
+void send_data_via_dma(uint8_t *buffer, size_t len) {
+    prepare_buffer(buffer, len);  // Writes to buffer
+    start_dma_transfer(buffer);   // WRONG: DMA reads memory, not cache
+}
+
+// Fix: Flush cache before DMA
+void send_data_via_dma(uint8_t *buffer, size_t len) {
+    prepare_buffer(buffer, len);
+    cache_flush(buffer, len);      // Flush cache to memory
+    start_dma_transfer(buffer);    // OK: DMA sees correct data
+}
+
+// Symptom: Incorrect data transferred, data corruption
+// Debug: Suspect cache issues when CPU and DMA/device interact
+                    </pre>
+                </div>
+
+                <h4>4. Race Conditions / Timing Issues</h4>
+                <div class="code-example">
+                    <pre>
+// Bug: Reading status too quickly
+void configure_pll(uint32_t freq) {
+    PLL_CONFIG_REG = freq;
+    // WRONG: Immediately checking lock status
+    if (PLL_STATUS_REG & PLL_LOCKED) {
+        return;  // Might not be locked yet!
+    }
+}
+
+// Fix: Add delay or poll with timeout
+void configure_pll(uint32_t freq) {
+    PLL_CONFIG_REG = freq;
+
+    // Wait for lock with timeout
+    uint32_t timeout = 10000;
+    while (!(PLL_STATUS_REG & PLL_LOCKED) && timeout--) {
+        udelay(1);  // 1 microsecond delay
+    }
+
+    if (timeout == 0) {
+        log_error("PLL failed to lock");
+    }
+}
+
+// Symptom: Works in simulation, fails on faster emulation/silicon
+// Debug: Look for missing delays, add timeouts to polls
+                    </pre>
+                </div>
+
+                <h4>5. Interrupt Misconfiguration</h4>
+                <div class="code-example">
+                    <pre>
+// Bug: Enabling interrupt before handler installed
+void setup_timer() {
+    TIMER_CONTROL_REG |= TIMER_INT_ENABLE;  // WRONG: Enable first
+    install_isr(TIMER_IRQ_NUM, timer_handler);  // Then install
+}
+
+// Fix: Install handler first
+void setup_timer() {
+    install_isr(TIMER_IRQ_NUM, timer_handler);  // Install first
+    TIMER_CONTROL_REG |= TIMER_INT_ENABLE;      // Then enable
+}
+
+// Other interrupt bugs:
+// - Wrong vector number
+// - Not acknowledging interrupt (causing interrupt storm)
+// - Interrupt priority conflicts
+                    </pre>
+                </div>
+
+                <h4>6. Endianness Issues</h4>
+                <div class="code-example">
+                    <pre>
+// Bug: Assuming wrong byte order
+uint32_t read_config_from_flash() {
+    uint8_t bytes[4];
+    flash_read(CONFIG_ADDR, bytes, 4);
+
+    // WRONG on little-endian system if flash is big-endian
+    return *(uint32_t *)bytes;
+}
+
+// Fix: Explicitly handle endianness
+uint32_t read_config_from_flash() {
+    uint8_t bytes[4];
+    flash_read(CONFIG_ADDR, bytes, 4);
+
+    // Convert big-endian to host
+    return (bytes[0] << 24) | (bytes[1] << 16) |
+           (bytes[2] << 8)  | bytes[3];
+}
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Debug Tools and Techniques</h3>
+
+                <h4>Adding Debug Instrumentation</h4>
+                <div class="code-example">
+                    <pre>
+// Debug logging with levels
+#define LOG_ERROR   0
+#define LOG_WARN    1
+#define LOG_INFO    2
+#define LOG_DEBUG   3
+
+#ifndef LOG_LEVEL
+#define LOG_LEVEL LOG_INFO
+#endif
+
+#define LOG(level, ...) \
+    do { \
+        if (level <= LOG_LEVEL) { \
+            printf("[%s] ", get_log_level_str(level)); \
+            printf(__VA_ARGS__); \
+            printf("\n"); \
+        } \
+    } while(0)
+
+// Usage
+LOG(LOG_INFO, "DDR initialization starting");
+LOG(LOG_DEBUG, "DDR config: freq=%d, size=%dMB", freq, size);
+LOG(LOG_ERROR, "DDR init failed with status 0x%08x", status);
+                    </pre>
+                </div>
+
+                <h4>Performance Profiling</h4>
+                <div class="code-example">
+                    <pre>
+// Measure execution time
+uint64_t start_time = get_timestamp();
+
+perform_operation();
+
+uint64_t end_time = get_timestamp();
+uint64_t elapsed = end_time - start_time;
+
+LOG(LOG_INFO, "Operation took %llu cycles", elapsed);
+
+// Function profiling
+#define PROFILE_START(name) \
+    uint64_t __prof_##name = get_timestamp()
+
+#define PROFILE_END(name) \
+    LOG(LOG_INFO, #name " took %llu cycles", \
+        get_timestamp() - __prof_##name)
+
+// Usage
+PROFILE_START(ddr_init);
+initialize_ddr();
+PROFILE_END(ddr_init);
+                    </pre>
+                </div>
+
+                <h4>Memory Debugging</h4>
+                <div class="code-example">
+                    <pre>
+// Check for memory corruption
+void memory_test(uint32_t *addr, size_t size) {
+    // Walking 1s pattern
+    for (size_t i = 0; i < size/4; i++) {
+        addr[i] = 1 << (i % 32);
+    }
+    for (size_t i = 0; i < size/4; i++) {
+        if (addr[i] != (1 << (i % 32))) {
+            LOG(LOG_ERROR, "Memory error at 0x%p", &addr[i]);
+        }
+    }
+
+    // Address test (catch address line issues)
+    for (size_t i = 0; i < size/4; i++) {
+        addr[i] = (uint32_t)&addr[i];
+    }
+    for (size_t i = 0; i < size/4; i++) {
+        if (addr[i] != (uint32_t)&addr[i]) {
+            LOG(LOG_ERROR, "Address error at 0x%p", &addr[i]);
+        }
+    }
+}
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="qa-section">
+            <h2>Common Q&A</h2>
+            <div class="card">
+                <div class="qa-item">
+                    <div class="question">
+                        How do you debug an issue that only happens on emulation, not simulation?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        This suggests a timing-sensitive issue:
+                        <ul>
+                            <li><strong>Hypothesis:</strong> Race condition that manifests at higher speeds</li>
+                            <li>Add delays in simulation to see if you can trigger it</li>
+                            <li>Look for missing synchronization (cache flushes, memory barriers)</li>
+                            <li>Check for polling loops without timeouts</li>
+                            <li>Review interrupt timing - are you missing events?</li>
+                            <li>Use emulation debug features (breakpoints, memory dumps)</li>
+                        </ul>
+                        Timing issues are among the hardest to debug - systematic comparison of execution flow helps.
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        What information should you collect when filing a bug report?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        A good bug report includes:
+                        <ul>
+                            <li><strong>Reproduction steps:</strong> Exact steps to trigger the issue</li>
+                            <li><strong>Environment:</strong> Platform (sim/emulation), build version, configuration</li>
+                            <li><strong>Expected vs actual:</strong> What should happen vs what does</li>
+                            <li><strong>Logs:</strong> Relevant log snippets showing the failure</li>
+                            <li><strong>Frequency:</strong> Always fails, intermittent (X%), seen once</li>
+                            <li><strong>Severity:</strong> Impact on functionality</li>
+                            <li><strong>Analysis:</strong> Any initial investigation you've done</li>
+                            <li><strong>Workaround:</strong> If one exists</li>
+                        </ul>
+                        Make it easy for others to understand and reproduce the problem.
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        How would you handle an intermittent failure that's hard to reproduce?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        Strategies for intermittent bugs:
+                        <ul>
+                            <li><strong>Increase iterations:</strong> Run test 100x or 1000x to trigger more often</li>
+                            <li><strong>Add stress:</strong> Vary timing, enable other features, increase load</li>
+                            <li><strong>Enhanced logging:</strong> Add more detailed instrumentation</li>
+                            <li><strong>Bisection:</strong> Binary search through code changes to find when it started</li>
+                            <li><strong>Statistical analysis:</strong> Look for patterns in when it fails</li>
+                            <li><strong>Environment changes:</strong> Does it correlate with specific config/setup?</li>
+                        </ul>
+                        Intermittent bugs often indicate race conditions, timing issues, or uninitialized variables.
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        What's the difference between debugging in simulation vs on actual hardware?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        <strong>Simulation advantages:</strong>
+                        <ul>
+                            <li>Perfect visibility - can see all internal signals</li>
+                            <li>Reproducible - exact same execution every time</li>
+                            <li>Can manipulate time, inject faults easily</li>
+                            <li>Waveform viewing for detailed analysis</li>
+                        </ul>
+                        <strong>Hardware advantages:</strong>
+                        <ul>
+                            <li>Real-world conditions and timing</li>
+                            <li>Much faster execution</li>
+                            <li>Can use traditional debuggers (JTAG, ICE)</li>
+                            <li>Sees issues that simulation might miss</li>
+                        </ul>
+                        Use simulation for deep analysis, hardware for real-world validation.
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="scroll-top">↑</div>
+
+    <footer>
+        <p>AMD Firmware Verification Study Guide</p>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        markTopicViewed('debugging');
+    </script>
+</body>
+</html>

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tools & Systems - AMD Study Guide</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="logo">AMD Firmware Study</h1>
+            <button class="menu-toggle" aria-label="Toggle menu">☰</button>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="firmware-arch.html">Firmware Architecture</a></li>
+                <li><a href="qa-concepts.html">QA Concepts</a></li>
+                <li><a href="programming.html">Programming</a></li>
+                <li><a href="debugging.html">Debugging</a></li>
+                <li><a href="tools.html" class="active">Tools & Systems</a></li>
+                <li><a href="interview.html">Interview Prep</a></li>
+                <li><a href="quiz.html">Quiz</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        <header>
+            <h1>Tools & System Understanding</h1>
+            <p>Essential tools for verification and understanding SoC architecture</p>
+        </header>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Jama - Requirements Management</h3>
+                <p>Tool for managing and tracking requirements throughout the development lifecycle.</p>
+
+                <h4>Key Concepts</h4>
+                <ul class="concept-list">
+                    <li><strong>Requirements Traceability:</strong> Link requirements to test cases and code</li>
+                    <li><strong>Requirement Types:</strong> Functional, non-functional, system, software</li>
+                    <li><strong>Versioning:</strong> Track requirement changes over time</li>
+                    <li><strong>Impact Analysis:</strong> See what's affected when requirements change</li>
+                </ul>
+
+                <h4>Typical Workflow</h4>
+                <div class="code-example">
+                    <pre>
+1. Create Requirement
+   ├─> Write clear, testable requirement
+   ├─> Assign priority (must-have, should-have, nice-to-have)
+   └─> Add acceptance criteria
+
+2. Link to Design
+   └─> Connect requirement to design documents
+
+3. Create Test Cases
+   ├─> Write test cases that verify the requirement
+   └─> Link test cases to requirement in Jama
+
+4. Track Coverage
+   ├─> View which requirements are tested
+   └─> Identify gaps in coverage
+
+5. Manage Changes
+   ├─> When requirement changes, see impacted tests
+   └─> Update tests accordingly
+                    </pre>
+                </div>
+
+                <h4>Example Requirement</h4>
+                <div class="info-box important">
+                    <div class="info-box-title">REQ-BOOT-SEC-001</div>
+                    <strong>Title:</strong> Secure Boot Signature Verification
+                    <br><br>
+                    <strong>Description:</strong> The boot ROM shall verify the cryptographic signature of the PSP firmware before execution.
+                    <br><br>
+                    <strong>Acceptance Criteria:</strong>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                        <li>Firmware with valid signature shall boot successfully</li>
+                        <li>Firmware with invalid signature shall be rejected</li>
+                        <li>Unsigned firmware shall be rejected</li>
+                        <li>Verification shall complete within 100ms</li>
+                    </ul>
+                    <strong>Test Cases:</strong> TC-BOOT-001, TC-BOOT-002, TC-BOOT-003
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>GitHub - Version Control</h3>
+                <p>Distributed version control for managing firmware source code and collaboration.</p>
+
+                <h4>Essential Git Concepts</h4>
+                <ul class="concept-list">
+                    <li><strong>Repository:</strong> Project storage with full history</li>
+                    <li><strong>Commit:</strong> Snapshot of changes with message</li>
+                    <li><strong>Branch:</strong> Independent line of development</li>
+                    <li><strong>Merge:</strong> Combine changes from different branches</li>
+                    <li><strong>Pull Request:</strong> Propose changes for review</li>
+                    <li><strong>Conflict:</strong> Overlapping changes that need manual resolution</li>
+                </ul>
+
+                <h4>Common Git Workflow</h4>
+                <div class="code-example">
+                    <pre>
+# Clone repository
+git clone https://github.com/company/firmware-repo.git
+cd firmware-repo
+
+# Create feature branch
+git checkout -b feature/add-ddr-init
+
+# Make changes and commit
+git add src/ddr_init.c
+git commit -m "Add DDR4 initialization support"
+
+# Push to remote
+git push origin feature/add-ddr-init
+
+# Create pull request on GitHub for review
+
+# After approval, merge to main
+git checkout main
+git pull origin main
+git merge feature/add-ddr-init
+git push origin main
+
+# Common commands
+git status              # Check current state
+git log                 # View commit history
+git diff                # See changes
+git blame file.c        # See who changed each line
+git bisect             # Binary search for bug introduction
+                    </pre>
+                </div>
+
+                <h4>GitHub Features for Verification</h4>
+                <ul class="concept-list">
+                    <li><strong>Actions:</strong> CI/CD automation (run tests on every commit)</li>
+                    <li><strong>Issues:</strong> Bug tracking and task management</li>
+                    <li><strong>Pull Requests:</strong> Code review workflow</li>
+                    <li><strong>Branch Protection:</strong> Require tests to pass before merging</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Jira - Project Management</h3>
+                <p>Issue tracking and project management tool for agile development.</p>
+
+                <h4>Key Concepts</h4>
+                <ul class="concept-list">
+                    <li><strong>Issue Types:</strong> Bug, Story, Task, Epic</li>
+                    <li><strong>Workflow:</strong> To Do → In Progress → Code Review → Done</li>
+                    <li><strong>Sprint:</strong> Time-boxed iteration (typically 2 weeks)</li>
+                    <li><strong>Backlog:</strong> Prioritized list of work items</li>
+                    <li><strong>Velocity:</strong> Amount of work completed per sprint</li>
+                </ul>
+
+                <h4>Typical Verification Workflow</h4>
+                <div class="code-example">
+                    <pre>
+Story: "Verify Secure Boot on Emulation Platform"
+
+Tasks:
+├─> TASK-1234: Set up emulation environment
+│   Status: Done
+│   Assignee: You
+│
+├─> TASK-1235: Develop test cases for secure boot
+│   Status: In Progress
+│   Assignee: You
+│
+├─> TASK-1236: Implement test automation
+│   Status: To Do
+│   Assignee: You
+│
+└─> TASK-1237: Execute tests and report results
+    Status: To Do
+    Assignee: TBD
+
+Bug: "Secure boot fails with corrupted firmware"
+├─> Priority: High
+├─> Severity: Critical
+├─> Status: In Progress
+├─> Reproduction steps: [detailed steps]
+└─> Linked to: TASK-1235
+                    </pre>
+                </div>
+
+                <h4>Best Practices</h4>
+                <ul class="concept-list">
+                    <li>Keep issues updated with current status</li>
+                    <li>Add clear reproduction steps for bugs</li>
+                    <li>Link related issues (blocks, is blocked by, relates to)</li>
+                    <li>Estimate work accurately to improve planning</li>
+                    <li>Use labels and components for organization</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>SoC Architecture Basics</h3>
+                <p>Understanding System-on-Chip components and how they interact.</p>
+
+                <h4>SoC = System on a Chip</h4>
+                <p>An integrated circuit that contains all components of a computer on a single chip.</p>
+
+                <h4>Major Components</h4>
+                <div class="code-example">
+                    <pre>
+┌─────────────────────────────────────────────────────┐
+│                    AMD SoC                          │
+│                                                     │
+│  ┌──────────┐  ┌──────────┐  ┌──────────────────┐ │
+│  │   CPU    │  │   GPU    │  │  Memory          │ │
+│  │  Cores   │  │  Cores   │  │  Controller      │ │
+│  │  (x86)   │  │  (RDNA)  │  │  (DDR4/5)        │ │
+│  └────┬─────┘  └────┬─────┘  └────┬─────────────┘ │
+│       │             │              │               │
+│  ┌────┴─────────────┴──────────────┴────────────┐  │
+│  │           Interconnect Fabric (Bus)          │  │
+│  │              (AXI, CHI, etc.)                │  │
+│  └────┬─────────┬──────────┬──────────┬─────────┘  │
+│       │         │          │          │            │
+│  ┌────┴────┐ ┌─┴────┐  ┌──┴──────┐ ┌─┴──────────┐ │
+│  │  PSP    │ │ PCIe │  │  USB    │ │   SATA     │ │
+│  │ (Secure │ │      │  │         │ │            │ │
+│  │  Proc)  │ │      │  │         │ │            │ │
+│  └─────────┘ └──────┘  └─────────┘ └────────────┘ │
+│                                                     │
+│  ┌─────────────┐  ┌──────────────────────────────┐ │
+│  │  Display    │  │  Other IP Blocks:            │ │
+│  │  Engine     │  │  - Audio codec               │ │
+│  │             │  │  - Network controller        │ │
+│  └─────────────┘  │  - Sensors interface         │ │
+│                   └──────────────────────────────┘ │
+└─────────────────────────────────────────────────────┘
+                    </pre>
+                </div>
+
+                <h4>Component Descriptions</h4>
+                <ul class="concept-list">
+                    <li><strong>CPU Cores:</strong> Main processing units running software</li>
+                    <li><strong>GPU Cores:</strong> Graphics and compute acceleration</li>
+                    <li><strong>Memory Controller:</strong> Manages DRAM access and initialization</li>
+                    <li><strong>PSP (Platform Security Processor):</strong> Handles security functions, secure boot</li>
+                    <li><strong>PCIe Controller:</strong> High-speed peripheral interconnect</li>
+                    <li><strong>USB/SATA Controllers:</strong> I/O device interfaces</li>
+                    <li><strong>Interconnect Fabric:</strong> Bus connecting all components</li>
+                </ul>
+
+                <div class="info-box important">
+                    <div class="info-box-title">Verification Implication</div>
+                    Each IP block has firmware that needs verification. Interactions between blocks (e.g., CPU accessing GPU memory via interconnect) are critical test scenarios.
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>DDR Memory Initialization</h3>
+                <p>DDR (Double Data Rate) SDRAM initialization is a critical early boot step.</p>
+
+                <h4>Why DDR Init is Important</h4>
+                <ul class="concept-list">
+                    <li>Most firmware runs from DDR after initial boot from ROM</li>
+                    <li>Complex initialization sequence with precise timing requirements</li>
+                    <li>Incorrect init can cause system instability or boot failures</li>
+                </ul>
+
+                <h4>DDR Initialization Steps (High-Level)</h4>
+                <div class="code-example">
+                    <pre>
+1. Power Up Sequence
+   ├─> Apply power to DDR modules
+   ├─> Ensure voltage stability
+   └─> Wait for power-up time (typically 200-500μs)
+
+2. Reset and Clock Initialization
+   ├─> Apply reset signal
+   ├─> Configure memory clock (PLL)
+   └─> Wait for clock to stabilize
+
+3. Configure Memory Controller
+   ├─> Set timing parameters (CAS latency, RAS, etc.)
+   ├─> Configure DDR type (DDR4, DDR5)
+   ├─> Set memory size and organization
+   └─> Configure refresh rate
+
+4. DDR Training
+   ├─> Write Leveling: Align write data to clock
+   ├─> Read Leveling: Align read data capture
+   ├─> Gate Training: Optimize read gate timing
+   └─> Voltage/Impedance Calibration
+
+5. Initialization Commands
+   ├─> Send MRS (Mode Register Set) commands
+   ├─> Configure DDR operating modes
+   └─> Enable auto-refresh
+
+6. Memory Test
+   ├─> Run basic read/write tests
+   ├─> Verify ECC if enabled
+   └─> Mark DDR as ready for use
+                    </pre>
+                </div>
+
+                <h4>Verification Focus Areas</h4>
+                <ul class="concept-list">
+                    <li>Verify training completes successfully</li>
+                    <li>Check timing parameter calculations are correct</li>
+                    <li>Test different DDR sizes and configurations</li>
+                    <li>Validate error handling (failed training, bad DIMMs)</li>
+                    <li>Measure initialization time</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>PCIe Basics</h3>
+                <p>PCI Express - high-speed serial bus for connecting peripherals.</p>
+
+                <h4>Key Concepts</h4>
+                <ul class="concept-list">
+                    <li><strong>Lanes:</strong> PCIe x1, x4, x8, x16 (number of serial lanes)</li>
+                    <li><strong>Generations:</strong> PCIe 3.0 (8GT/s), 4.0 (16GT/s), 5.0 (32GT/s)</li>
+                    <li><strong>Link Training:</strong> Negotiation of speed and width at boot</li>
+                    <li><strong>Enumeration:</strong> Discovering devices on the bus</li>
+                    <li><strong>Configuration Space:</strong> Registers for device configuration</li>
+                </ul>
+
+                <h4>PCIe Boot Sequence</h4>
+                <div class="code-example">
+                    <pre>
+1. PCIe Controller Initialization
+   └─> Configure PCIe controller registers
+
+2. Link Training
+   ├─> Detect presence of device
+   ├─> Negotiate link width and speed
+   └─> Establish stable link
+
+3. Enumeration
+   ├─> BIOS/firmware scans PCIe bus
+   ├─> Discovers devices (reads vendor/device IDs)
+   ├─> Assigns memory and I/O resources (BARs)
+   └─> Loads device drivers
+
+4. Device Ready
+   └─> Device can be accessed by software
+                    </pre>
+                </div>
+
+                <h4>Verification Points</h4>
+                <ul class="concept-list">
+                    <li>Verify link training completes at expected width/speed</li>
+                    <li>Check enumeration discovers all devices</li>
+                    <li>Test hot-plug scenarios</li>
+                    <li>Validate error handling (link down, correctable errors)</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Clock and Reset Sequencing</h3>
+                <p>Proper ordering of clocks and resets is critical for SoC initialization.</p>
+
+                <h4>General Principles</h4>
+                <div class="code-example">
+                    <pre>
+Startup Sequence:
+1. Assert reset (hold components in reset state)
+2. Enable and stabilize clocks
+3. Deassert reset (allow components to run)
+
+Shutdown Sequence:
+1. Assert reset (stop operation)
+2. Disable clocks (save power)
+
+Critical Rule: Never release reset before clock is stable!
+                    </pre>
+                </div>
+
+                <h4>Clock Domains</h4>
+                <ul class="concept-list">
+                    <li>Different parts of SoC can run at different frequencies</li>
+                    <li>Clock domain crossings require special synchronization logic</li>
+                    <li>Firmware must enable clocks for each block before accessing it</li>
+                </ul>
+
+                <div class="info-box warning">
+                    <div class="info-box-title">Common Bug</div>
+                    Accessing peripheral registers before enabling its clock → undefined behavior, hangs, or bus errors
+                </div>
+            </div>
+        </section>
+
+        <section class="qa-section">
+            <h2>Common Q&A</h2>
+            <div class="card">
+                <div class="qa-item">
+                    <div class="question">
+                        How do you ensure requirements are testable?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        A testable requirement should be:
+                        <ul>
+                            <li><strong>Specific:</strong> Clear, unambiguous statement</li>
+                            <li><strong>Measurable:</strong> Quantifiable criteria (e.g., "within 100ms" not "quickly")</li>
+                            <li><strong>Observable:</strong> Can verify from external behavior or logs</li>
+                            <li><strong>Achievable:</strong> Technically feasible to implement and test</li>
+                        </ul>
+                        Bad: "System should boot fast"<br>
+                        Good: "System shall complete boot sequence within 2 seconds from power-on"
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        What would you check if DDR initialization is failing?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        Debug steps:
+                        <ul>
+                            <li>Check memory controller configuration registers (timing, frequency, size)</li>
+                            <li>Verify clock to DDR is stable and at correct frequency</li>
+                            <li>Review training results - which training step failed?</li>
+                            <li>Check power sequencing - is DDR getting correct voltages?</li>
+                            <li>Look for calibration errors in logs</li>
+                            <li>Try different DDR configurations (different sizes, speeds)</li>
+                            <li>Check for silicon errata related to DDR init</li>
+                        </ul>
+                        DDR init is complex - narrow down which stage is failing first.
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        How do you handle conflicts during Git merges?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        When Git can't automatically merge changes:
+                        <pre style="background:#f4f4f4; padding:1rem; margin-top:0.5rem;">
+# Attempt merge
+git merge feature-branch
+
+# If conflicts occur:
+# 1. Git marks conflicted files
+git status  # See which files have conflicts
+
+# 2. Open conflicted files, look for markers:
+<<<<<<< HEAD
+Your current code
+=======
+Incoming code
+>>>>>>> feature-branch
+
+# 3. Edit to resolve - keep one version, both, or rewrite
+# 4. Remove conflict markers
+# 5. Mark as resolved
+git add resolved-file.c
+
+# 6. Complete merge
+git commit
+</pre>
+                        Pro tip: Use a merge tool like kdiff3, meld, or VS Code's merge editor for complex conflicts.
+                    </div>
+                </div>
+
+                <div class="qa-item">
+                    <div class="question">
+                        What's the difference between PCIe link training and enumeration?
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="answer">
+                        <strong>Link Training:</strong>
+                        <ul>
+                            <li>Physical layer establishment</li>
+                            <li>Happens automatically at hardware level</li>
+                            <li>Negotiates speed (Gen 3/4/5) and width (x1/x4/x8/x16)</li>
+                            <li>Results in a working PCIe link</li>
+                        </ul>
+                        <strong>Enumeration:</strong>
+                        <ul>
+                            <li>Software/firmware discovery of devices</li>
+                            <li>Reads configuration space to identify devices</li>
+                            <li>Assigns resources (memory addresses, interrupt numbers)</li>
+                            <li>Results in devices ready for OS/driver use</li>
+                        </ul>
+                        Link training must complete successfully before enumeration can occur.
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div class="scroll-top">↑</div>
+
+    <footer>
+        <p>AMD Firmware Verification Study Guide</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

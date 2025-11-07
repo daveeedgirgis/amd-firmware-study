@@ -398,6 +398,398 @@ void memory_test(uint32_t *addr, size_t size) {
             </div>
         </section>
 
+        <section class="topic-section">
+            <div class="card">
+                <h3>More Common Firmware Bugs - Detailed Analysis</h3>
+
+                <h4>7. Uninitialized Variables and Memory</h4>
+                <div class="code-example">
+                    <pre>
+// Bug: Reading uninitialized memory
+uint32_t read_config(void) {
+    uint32_t config;  // WRONG: Not initialized!
+    if (some_condition) {
+        config = read_from_flash();
+    }
+    // If condition false, config contains garbage
+    return config;
+}
+
+// Fix: Always initialize
+uint32_t read_config(void) {
+    uint32_t config = DEFAULT_CONFIG;  // OK: Default value
+    if (some_condition) {
+        config = read_from_flash();
+    }
+    return config;
+}
+
+// Bug: Using uninitialized structure
+struct ddr_config ddr;  // Stack variable, contains garbage!
+ddr.frequency = 1600;
+// Other fields contain random values!
+configure_ddr(&ddr);
+
+// Fix: Zero-initialize
+struct ddr_config ddr = {0};  // All fields set to 0
+ddr.frequency = 1600;
+configure_ddr(&ddr);
+
+// Or use memset
+struct ddr_config ddr;
+memset(&ddr, 0, sizeof(ddr));
+ddr.frequency = 1600;
+                    </pre>
+                </div>
+
+                <div class="info-box warning">
+                    <div class="info-box-title">Symptom</div>
+                    Random, irreproducible failures. Behavior changes between runs or compiler versions. Valgrind or AddressSanitizer will catch these!
+                </div>
+
+                <h4>8. Pointer Aliasing Bugs</h4>
+                <div class="code-example">
+                    <pre>
+// Bug: Type punning via pointers (undefined behavior)
+uint32_t value = 0x12345678;
+uint8_t *bytes = (uint8_t *)&value;  // Violates strict aliasing!
+bytes[0] = 0xAB;  // May not work as expected with optimization
+
+// Fix: Use union for type punning
+union {
+    uint32_t value;
+    uint8_t bytes[4];
+} data;
+
+data.value = 0x12345678;
+data.bytes[0] = 0xAB;  // OK: Defined behavior
+
+// Or use memcpy (compiler will optimize)
+uint32_t value = 0x12345678;
+uint8_t bytes[4];
+memcpy(bytes, &value, sizeof(value));
+bytes[0] = 0xAB;
+memcpy(&value, bytes, sizeof(value));
+
+// Bug: Returning pointer to stack variable
+uint32_t *get_buffer(void) {
+    uint32_t buffer[256];
+    // ... fill buffer ...
+    return buffer;  // WRONG: buffer destroyed after return!
+}
+
+// Fix: Use static, malloc, or caller-provided buffer
+uint32_t *get_buffer(void) {
+    static uint32_t buffer[256];  // OK: Persists after return
+    return buffer;
+}
+
+// Or pass buffer from caller
+void fill_buffer(uint32_t *buffer, size_t size) {
+    // Caller owns the buffer
+}
+                    </pre>
+                </div>
+
+                <h4>9. Stack Overflow</h4>
+                <div class="code-example">
+                    <pre>
+// Bug: Large arrays on stack
+void process_image(void) {
+    uint8_t image_buffer[4096 * 4096];  // WRONG: 16MB on stack!
+    // Stack overflow, corruption
+}
+
+// Fix: Use static or heap allocation
+void process_image(void) {
+    static uint8_t image_buffer[4096 * 4096];  // OK: In .bss section
+    // Or: uint8_t *buffer = malloc(4096 * 4096);
+}
+
+// Bug: Deep recursion
+void recursive_parse(struct node *n) {
+    if (n == NULL) return;
+    recursive_parse(n->left);   // Can overflow
+    recursive_parse(n->right);  // with deep trees
+}
+
+// Fix: Use iteration or limit recursion depth
+void recursive_parse_safe(struct node *n, int depth) {
+    if (n == NULL || depth > MAX_DEPTH) return;
+    recursive_parse_safe(n->left, depth + 1);
+    recursive_parse_safe(n->right, depth + 1);
+}
+
+// Or convert to iteration with explicit stack
+void iterative_parse(struct node *root) {
+    struct node *stack[MAX_DEPTH];
+    int top = 0;
+    stack[top++] = root;
+
+    while (top > 0) {
+        struct node *n = stack[--top];
+        // Process n
+        if (n->right) stack[top++] = n->right;
+        if (n->left)  stack[top++] = n->left;
+    }
+}
+                    </pre>
+                </div>
+
+                <h4>10. Integer Overflow/Underflow</h4>
+                <div class="code-example">
+                    <pre>
+// Bug: Size calculation overflow
+void allocate_array(uint32_t num_elements) {
+    size_t size = num_elements * sizeof(uint32_t);  // Can overflow!
+    uint32_t *array = malloc(size);
+    // If overflow, size wraps around, allocating tiny buffer
+}
+
+// Fix: Check for overflow
+void allocate_array(uint32_t num_elements) {
+    if (num_elements > SIZE_MAX / sizeof(uint32_t)) {
+        return NULL;  // Would overflow
+    }
+    size_t size = num_elements * sizeof(uint32_t);
+    uint32_t *array = malloc(size);
+}
+
+// Bug: Counter underflow
+uint32_t count = 0;
+count--;  // Wraps to 0xFFFFFFFF!
+
+// Fix: Check before decrement
+if (count > 0) {
+    count--;
+}
+
+// Bug: Signed overflow (undefined behavior)
+int32_t x = INT32_MAX;
+x++;  // Undefined behavior!
+
+// Use unsigned or check
+uint32_t x = UINT32_MAX;
+x++;  // Defined: wraps to 0
+
+// Or check before operation
+if (x < INT32_MAX) {
+    x++;
+}
+                    </pre>
+                </div>
+
+                <h4>11. Bit Field Ordering Issues</h4>
+                <div class="code-example">
+                    <pre>
+// Bit fields are implementation-defined and non-portable!
+
+struct hw_register {
+    uint32_t field_a : 8;   // Bits 0-7 or bits 24-31?
+    uint32_t field_b : 8;   // Implementation-defined!
+    uint32_t field_c : 16;
+};
+
+// This might not match hardware layout!
+
+// Fix: Use explicit bit masks and shifts
+#define REG_FIELD_A_MASK   0x000000FF
+#define REG_FIELD_A_SHIFT  0
+#define REG_FIELD_B_MASK   0x0000FF00
+#define REG_FIELD_B_SHIFT  8
+#define REG_FIELD_C_MASK   0xFFFF0000
+#define REG_FIELD_C_SHIFT  16
+
+#define GET_FIELD_A(reg) (((reg) & REG_FIELD_A_MASK) >> REG_FIELD_A_SHIFT)
+#define SET_FIELD_A(val) (((val) << REG_FIELD_A_SHIFT) & REG_FIELD_A_MASK)
+
+// Usage
+uint32_t reg = *HW_REG;
+uint8_t field_a = GET_FIELD_A(reg);
+
+*HW_REG = SET_FIELD_A(new_value) | /* other fields */;
+                    </pre>
+                </div>
+
+                <h4>12. Mutex/Lock Ordering Deadlock</h4>
+                <div class="code-example">
+                    <pre>
+// Bug: Inconsistent lock ordering causes deadlock
+
+// Thread A:
+lock(mutex_1);
+lock(mutex_2);  // Waits for Thread B to release mutex_2
+// ...
+unlock(mutex_2);
+unlock(mutex_1);
+
+// Thread B:
+lock(mutex_2);
+lock(mutex_1);  // Waits for Thread A to release mutex_1
+// DEADLOCK!
+unlock(mutex_1);
+unlock(mutex_2);
+
+// Fix: Always acquire locks in same order
+// Thread A:
+lock(mutex_1);  // Always lock mutex_1 first
+lock(mutex_2);
+// ...
+unlock(mutex_2);
+unlock(mutex_1);
+
+// Thread B:
+lock(mutex_1);  // Always lock mutex_1 first
+lock(mutex_2);
+// ...
+unlock(mutex_2);
+unlock(mutex_1);
+
+// Or use trylock with timeout
+bool acquire_both_locks(void) {
+    lock(mutex_1);
+    if (!trylock_timeout(mutex_2, 100ms)) {
+        unlock(mutex_1);  // Avoid deadlock
+        return false;
+    }
+    return true;
+}
+                    </pre>
+                </div>
+
+                <h4>13. Printf/Logging in ISR</h4>
+                <div class="code-example">
+                    <pre>
+// Bug: Using printf or complex code in ISR
+void timer_isr(void) {
+    printf("Timer interrupt!\n");  // WRONG: Can deadlock!
+    // printf may use locks, allocate memory, etc.
+}
+
+// ISRs should be fast and simple!
+
+// Fix: Set flag, defer work to main loop
+volatile bool timer_triggered = false;
+
+void timer_isr(void) {
+    timer_triggered = true;  // Just set flag
+    // Clear interrupt
+}
+
+// Main loop
+while (1) {
+    if (timer_triggered) {
+        timer_triggered = false;
+        printf("Timer interrupt occurred\n");  // OK: Not in ISR
+        handle_timer_event();
+    }
+}
+
+// Or use lock-free ring buffer for logging from ISR
+struct log_buffer {
+    char messages[MAX_MESSAGES][MAX_LEN];
+    volatile uint32_t write_idx;
+    volatile uint32_t read_idx;
+};
+
+void isr_log(const char *msg) {
+    uint32_t idx = log_buf.write_idx % MAX_MESSAGES;
+    strncpy(log_buf.messages[idx], msg, MAX_LEN-1);
+    log_buf.write_idx++;  // Atomic on most architectures
+}
+
+// Main loop drains buffer
+void process_logs(void) {
+    while (log_buf.read_idx != log_buf.write_idx) {
+        uint32_t idx = log_buf.read_idx % MAX_MESSAGES;
+        printf("%s\n", log_buf.messages[idx]);
+        log_buf.read_idx++;
+    }
+}
+                    </pre>
+                </div>
+
+                <h4>14. TOCTOU (Time-of-Check-Time-of-Use)</h4>
+                <div class="code-example">
+                    <pre>
+// Bug: Checking condition then acting on it (non-atomic)
+if (!(device_status & DEVICE_BUSY)) {
+    // RACE: Device might become busy here!
+    start_device_operation();  // Could fail or corrupt state
+}
+
+// Fix: Atomic check-and-set
+uint32_t status = atomic_fetch_or(&device_status, DEVICE_BUSY);
+if (!(status & DEVICE_BUSY)) {
+    // We atomically set BUSY, safe to proceed
+    start_device_operation();
+} else {
+    // Already busy
+}
+
+// Or use hardware test-and-set
+bool try_acquire_device(void) {
+    uint32_t expected = 0;
+    return atomic_compare_exchange_strong(&device_owner, &expected, CPU_ID);
+}
+
+// Bug: File existence check
+if (file_exists("config.bin")) {
+    // RACE: File could be deleted here!
+    fd = open("config.bin");
+    // fd could be NULL!
+}
+
+// Fix: Just try to open
+fd = open("config.bin");
+if (fd) {
+    // File exists and is open
+} else {
+    // File doesn't exist or can't open
+}
+                    </pre>
+                </div>
+
+                <h4>15. Off-by-One Errors</h4>
+                <div class="code-example">
+                    <pre>
+// Bug: Loop boundary errors
+uint8_t buffer[256];
+for (int i = 0; i <= 256; i++) {  // WRONG: i goes to 256!
+    buffer[i] = 0;  // buffer[256] is out of bounds!
+}
+
+// Fix: Use < instead of <=
+for (int i = 0; i < 256; i++) {  // OK: i goes to 255
+    buffer[i] = 0;
+}
+
+// Bug: String copying without null terminator space
+char dest[32];
+strncpy(dest, source, 32);  // WRONG: No space for null!
+// If source is ≥32 bytes, dest won't be null-terminated
+
+// Fix: Reserve space for null terminator
+char dest[33];  // Extra byte for null
+strncpy(dest, source, 32);
+dest[32] = '\0';  // Ensure null termination
+
+// Or use sizeof-1
+char dest[32];
+strncpy(dest, source, sizeof(dest)-1);
+dest[sizeof(dest)-1] = '\0';
+
+// Bug: Memory allocation size
+char *buffer = malloc(strlen(str));  // WRONG: No space for null!
+
+// Fix: Add 1 for null terminator
+char *buffer = malloc(strlen(str) + 1);
+strcpy(buffer, str);
+                    </pre>
+                </div>
+            </div>
+        </section>
+
         <section class="qa-section">
             <h2>Common Q&A</h2>
             <div class="card">

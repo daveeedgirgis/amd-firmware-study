@@ -264,6 +264,320 @@ while (system_running) {
             </div>
         </section>
 
+        <section class="topic-section" data-category="advanced">
+            <div class="card">
+                <h3>BIOS/UEFI Firmware</h3>
+                <p>Understanding the firmware layer that initializes hardware before the OS boots.</p>
+
+                <h4>BIOS vs UEFI</h4>
+                <div class="code-example">
+                    <pre>
+Legacy BIOS:
+├─> 16-bit real mode
+├─> Limited to MBR partitioning (2TB disks)
+├─> Text-based setup interface
+└─> Simple INT 13h disk access
+
+UEFI (Unified Extensible Firmware Interface):
+├─> 32/64-bit protected mode
+├─> Supports GPT partitioning (>2TB disks)
+├─> Graphical setup interface
+├─> Modular driver model
+├─> Secure Boot support
+└─> Network boot capabilities
+                    </pre>
+                </div>
+
+                <h4>UEFI Boot Process</h4>
+                <ul class="concept-list">
+                    <li><strong>SEC (Security Phase):</strong> First code execution, initialize temporary memory</li>
+                    <li><strong>PEI (Pre-EFI Initialization):</strong> Initialize RAM, prepare for DXE</li>
+                    <li><strong>DXE (Driver Execution Environment):</strong> Load drivers, initialize devices</li>
+                    <li><strong>BDS (Boot Device Selection):</strong> Select and load OS bootloader</li>
+                    <li><strong>RT (Runtime):</strong> Provide runtime services to OS</li>
+                </ul>
+
+                <div class="code-example">
+                    <pre>
+// Example UEFI Runtime Services used by OS
+GetTime()           // Read real-time clock
+SetTime()           // Set real-time clock
+GetVariable()       // Read NVRAM variable
+SetVariable()       // Write NVRAM variable
+ResetSystem()       // Reboot/shutdown system
+                    </pre>
+                </div>
+
+                <div class="info-box important">
+                    <div class="info-box-title">Verification Focus</div>
+                    Verify each UEFI phase completes successfully, drivers load correctly, and runtime services work after OS handoff. Common issues: missing drivers, incorrect boot order, NVRAM corruption.
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section" data-category="advanced">
+            <div class="card">
+                <h3>Firmware Update & Recovery</h3>
+                <p>Mechanisms for updating firmware and recovering from failures.</p>
+
+                <h4>Firmware Update Methods</h4>
+                <ul class="concept-list">
+                    <li><strong>In-Band Update:</strong> OS-based update tools (Windows Update, Linux fwupd)</li>
+                    <li><strong>Out-of-Band Update:</strong> BMC or management controller updates firmware</li>
+                    <li><strong>Capsule Update:</strong> UEFI capsule delivered before OS boot</li>
+                    <li><strong>Recovery Mode:</strong> Minimal firmware to reflash from USB/network</li>
+                </ul>
+
+                <h4>Update Verification Steps</h4>
+                <div class="code-example">
+                    <pre>
+1. Signature Verification
+   └─> Verify update package is signed by trusted key
+
+2. Version Check
+   ├─> Ensure update is newer (prevent downgrade)
+   └─> Check compatibility with hardware revision
+
+3. Backup Current Firmware
+   └─> Save working firmware to recovery partition
+
+4. Flash New Firmware
+   ├─> Erase old firmware
+   ├─> Program new firmware
+   └─> Verify written data matches expected
+
+5. Activate New Firmware
+   ├─> Update boot pointers
+   └─> Mark new firmware as active
+
+6. Reboot and Verify
+   └─> Boot with new firmware, run POST tests
+                    </pre>
+                </div>
+
+                <h4>A/B Firmware Partitioning</h4>
+                <ul class="concept-list">
+                    <li>Two firmware copies: A (active) and B (backup)</li>
+                    <li>Update writes to inactive partition</li>
+                    <li>If update succeeds, switch active partition</li>
+                    <li>If boot fails, automatically fallback to previous version</li>
+                </ul>
+
+                <div class="info-box warning">
+                    <div class="info-box-title">Critical Test Cases</div>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                        <li>Power loss during update - verify recovery works</li>
+                        <li>Corrupted update package - reject with clear error</li>
+                        <li>Downgrade attack - prevent rollback to vulnerable version</li>
+                        <li>Failed boot after update - automatic recovery to previous</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section" data-category="advanced">
+            <div class="card">
+                <h3>Power Management in Firmware</h3>
+                <p>ACPI states and firmware's role in power management.</p>
+
+                <h4>ACPI Power States</h4>
+                <div class="code-example">
+                    <pre>
+Global States (G-states):
+G0 - Working (system fully on)
+G1 - Sleeping (subdivided into S-states)
+G2 - Soft Off (mechanical off, power button responsive)
+G3 - Mechanical Off (completely powered down)
+
+Sleep States (S-states):
+S0 - Working
+S1 - CPU stopped, RAM powered (rare)
+S2 - CPU off, dirty cache flushed (rare)
+S3 - Suspend to RAM (sleep mode)
+S4 - Suspend to Disk (hibernate)
+S5 - Soft Off
+
+CPU States (C-states):
+C0 - Active (executing instructions)
+C1 - Halt (CPU stopped, cache maintained)
+C2 - Stop Clock (clocks stopped, cache maintained)
+C3 - Sleep (caches flushed, slower wake)
+C6+ - Deep Sleep (very low power)
+
+Performance States (P-states):
+P0 - Maximum performance (highest frequency)
+P1, P2, ... - Progressively lower performance/power
+                    </pre>
+                </div>
+
+                <h4>Firmware Responsibilities</h4>
+                <ul class="concept-list">
+                    <li>Initialize ACPI tables (FADT, DSDT, SSDT)</li>
+                    <li>Implement S3 resume path (restore hardware state)</li>
+                    <li>Configure CPU C-state and P-state limits</li>
+                    <li>Handle power button and lid events</li>
+                    <li>Manage device D-states (D0=on, D3=off)</li>
+                </ul>
+
+                <div class="code-example">
+                    <pre>
+// S3 Suspend/Resume Flow
+Suspend (S0 → S3):
+1. OS saves context to RAM
+2. Firmware receives S3 sleep command
+3. Put devices in D3 (off) state
+4. Configure wake events (keyboard, USB, RTC)
+5. Enter S3 (RAM self-refresh, everything else off)
+
+Resume (S3 → S0):
+1. Wake event triggers (button, timer, USB)
+2. Firmware resumes execution
+3. Re-initialize memory controller (DDR still has data!)
+4. Restore CPU context
+5. Jump to OS resume vector
+6. OS restores devices and applications
+                    </pre>
+                </div>
+
+                <div class="info-box tip">
+                    <div class="info-box-title">Common S3 Resume Bugs</div>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                        <li>Forgetting to restore hardware register state</li>
+                        <li>DDR training on resume (slow and wrong - DDR stays on!)</li>
+                        <li>Incorrect wake source configuration</li>
+                        <li>Cache coherency issues after CPU context restore</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section" data-category="advanced">
+            <div class="card">
+                <h3>Firmware Data Structures</h3>
+                <p>Key data structures firmware uses to describe hardware to the OS.</p>
+
+                <h4>ACPI Tables</h4>
+                <ul class="concept-list">
+                    <li><strong>RSDP:</strong> Root System Description Pointer - entry point to ACPI</li>
+                    <li><strong>RSDT/XSDT:</strong> Root/Extended System Description Table - lists all other tables</li>
+                    <li><strong>FADT:</strong> Fixed ACPI Description Table - hardware register addresses</li>
+                    <li><strong>DSDT:</strong> Differentiated System Description Table - device tree in AML</li>
+                    <li><strong>SSDT:</strong> Secondary System Description Table - additional devices</li>
+                    <li><strong>MADT:</strong> Multiple APIC Description Table - CPU and interrupt info</li>
+                    <li><strong>SRAT:</strong> System Resource Affinity Table - NUMA topology</li>
+                </ul>
+
+                <h4>Device Tree (Arm/Embedded)</h4>
+                <div class="code-example">
+                    <pre>
+// Device Tree Example (DTS format)
+/ {
+    cpus {
+        cpu@0 {
+            device_type = "cpu";
+            compatible = "arm,cortex-a72";
+            reg = <0x0>;
+            clock-frequency = <1800000000>; // 1.8 GHz
+        };
+    };
+
+    memory@80000000 {
+        device_type = "memory";
+        reg = <0x80000000 0x40000000>; // 1GB at 0x80000000
+    };
+
+    uart@fe001000 {
+        compatible = "ns16550a";
+        reg = <0xfe001000 0x1000>;
+        interrupts = <33>;
+        clock-frequency = <50000000>;
+    };
+};
+                    </pre>
+                </div>
+
+                <h4>SMBIOSType 0 (BIOS Information)</h4>
+                <div class="code-example">
+                    <pre>
+struct smbios_type0 {
+    uint8_t  type;             // 0
+    uint8_t  length;
+    uint16_t handle;
+    uint8_t  vendor;           // String index
+    uint8_t  bios_version;     // String index
+    uint16_t bios_segment;
+    uint8_t  bios_release_date;
+    uint8_t  bios_rom_size;
+    uint64_t characteristics;
+    // ... more fields
+};
+
+// OS reads this to get BIOS version, vendor, features
+                    </pre>
+                </div>
+
+                <div class="info-box important">
+                    <div class="info-box-title">Verification</div>
+                    Validate all ACPI/SMBIOS tables are correctly formatted and contain accurate hardware information. Use OS tools (acpidump, dmidecode) to inspect tables and verify against hardware specs.
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section" data-category="advanced">
+            <div class="card">
+                <h3>Firmware Security Features</h3>
+                <p>Modern security mechanisms implemented in firmware.</p>
+
+                <h4>Measured Boot (TPM)</h4>
+                <ul class="concept-list">
+                    <li>Each boot stage measures (hashes) the next stage before executing it</li>
+                    <li>Measurements stored in TPM (Trusted Platform Module) PCRs</li>
+                    <li>Creates cryptographic log of boot process</li>
+                    <li>OS can verify boot integrity by checking PCR values</li>
+                    <li>Different from Secure Boot: doesn't prevent execution, only records</li>
+                </ul>
+
+                <div class="code-example">
+                    <pre>
+Measured Boot Flow:
+1. Boot ROM measures PSP firmware → extends PCR[0]
+2. PSP measures UEFI BIOS → extends PCR[0]
+3. UEFI measures bootloader → extends PCR[4]
+4. Bootloader measures kernel → extends PCR[8]
+5. OS verifies PCRs match expected values (attestation)
+                    </pre>
+                </div>
+
+                <h4>Intel Boot Guard / AMD Hardware Validated Boot</h4>
+                <ul class="concept-list">
+                    <li>OEM fuses contain hash of initial bootblock</li>
+                    <li>CPU verifies bootblock before execution (in microcode)</li>
+                    <li>Establishes root of trust in CPU, not firmware</li>
+                    <li>Prevents firmware-level rootkits</li>
+                </ul>
+
+                <h4>SMM (System Management Mode) Security</h4>
+                <ul class="concept-list">
+                    <li>Special CPU mode with highest privileges</li>
+                    <li>Used for low-level hardware management</li>
+                    <li>Isolated memory (SMRAM) hidden from OS</li>
+                    <li>Entry only via SMI (System Management Interrupt)</li>
+                    <li>Vulnerabilities in SMM code = full system compromise</li>
+                </ul>
+
+                <div class="info-box warning">
+                    <div class="info-box-title">Security Testing</div>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                        <li>Verify SMRAM is locked and inaccessible to OS</li>
+                        <li>Test SMI handlers for buffer overflows</li>
+                        <li>Ensure TPM PCRs accurately reflect boot components</li>
+                        <li>Test secure boot with revoked certificates</li>
+                        <li>Verify firmware rollback protection works</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
         <section class="qa-section">
             <h2>Common Q&A</h2>
             <div class="card">

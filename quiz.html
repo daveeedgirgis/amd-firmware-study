@@ -268,7 +268,9 @@
         ];
 
         // Initialize quiz when page loads
-        initQuiz(quizData);
+        document.addEventListener('DOMContentLoaded', function() {
+            initQuiz(quizData);
+        });
     </script>
 </body>
 </html>

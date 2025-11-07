@@ -527,6 +527,659 @@ $results | Export-Csv -Path "results.csv" -NoTypeInformation
             </div>
         </section>
 
+        <section class="topic-section">
+            <div class="card">
+                <h3>Advanced Python for Firmware Testing</h3>
+                <p>Real-world patterns for building robust test frameworks.</p>
+
+                <h4>Test Configuration Management</h4>
+                <div class="code-example">
+                    <pre>
+# config.py - Centralized test configuration
+import json
+from dataclasses import dataclass
+from typing import Dict, List
+
+@dataclass
+class PlatformConfig:
+    name: str
+    simulator_path: str
+    timeout_sec: int
+    supported_features: List[str]
+
+@dataclass
+class TestConfig:
+    platforms: Dict[str, PlatformConfig]
+    output_dir: str
+    log_level: str
+    parallel_tests: int
+
+def load_config(config_file: str) -> TestConfig:
+    """Load test configuration from JSON file"""
+    with open(config_file, 'r') as f:
+        data = json.load(f)
+
+    platforms = {
+        name: PlatformConfig(**platform_data)
+        for name, platform_data in data['platforms'].items()
+    }
+
+    return TestConfig(
+        platforms=platforms,
+        output_dir=data.get('output_dir', './results'),
+        log_level=data.get('log_level', 'INFO'),
+        parallel_tests=data.get('parallel_tests', 4)
+    )
+
+# config.json example:
+# {
+#     "platforms": {
+#         "rtl_sim": {
+#             "name": "RTL Simulation",
+#             "simulator_path": "/tools/sim/vcs",
+#             "timeout_sec": 3600,
+#             "supported_features": ["secure_boot", "ddr_init"]
+#         },
+#         "emulation": {
+#             "name": "Palladium Emulation",
+#             "simulator_path": "/tools/emu/palladium",
+#             "timeout_sec": 300,
+#             "supported_features": ["secure_boot", "ddr_init", "pcie", "usb"]
+#         }
+#     },
+#     "output_dir": "./test_results",
+#     "log_level": "DEBUG",
+#     "parallel_tests": 8
+# }
+                    </pre>
+                </div>
+
+                <h4>Robust Log Parsing with Regular Expressions</h4>
+                <div class="code-example">
+                    <pre>
+import re
+from typing import List, Dict, Optional
+from dataclasses import dataclass
+from enum import Enum
+
+class LogLevel(Enum):
+    DEBUG = 0
+    INFO = 1
+    WARNING = 2
+    ERROR = 3
+    FATAL = 4
+
+@dataclass
+class LogEntry:
+    timestamp: float
+    level: LogLevel
+    component: str
+    message: str
+    line_number: int
+
+class FirmwareLogAnalyzer:
+    """Parse and analyze firmware logs"""
+
+    # Regex patterns for different log formats
+    PATTERNS = {
+        'timestamp_level': re.compile(
+            r'\[(\d+\.\d+)\]\s+(\w+):\s+\[(\w+)\]\s+(.*)'
+        ),
+        'boot_stage': re.compile(
+            r'BOOT_STAGE:\s+(\w+)\s+-\s+(ENTER|EXIT|FAIL)'
+        ),
+        'register_access': re.compile(
+            r'REG_(READ|WRITE):\s+0x([0-9A-Fa-f]+)\s+=\s+0x([0-9A-Fa-f]+)'
+        ),
+        'memory_init': re.compile(
+            r'DDR:\s+(Training|Init)\s+(PASS|FAIL|START)\s+\((\d+)ms\)'
+        )
+    }
+
+    def __init__(self):
+        self.entries: List[LogEntry] = []
+        self.boot_stages: Dict[str, str] = {}
+        self.errors: List[LogEntry] = []
+
+    def parse_file(self, log_file: str) -> None:
+        """Parse entire log file"""
+        with open(log_file, 'r', encoding='utf-8', errors='ignore') as f:
+            for line_no, line in enumerate(f, 1):
+                entry = self.parse_line(line, line_no)
+                if entry:
+                    self.entries.append(entry)
+                    if entry.level in (LogLevel.ERROR, LogLevel.FATAL):
+                        self.errors.append(entry)
+
+                # Track boot stages
+                match = self.PATTERNS['boot_stage'].search(line)
+                if match:
+                    stage, status = match.groups()
+                    self.boot_stages[stage] = status
+
+    def parse_line(self, line: str, line_no: int) -> Optional[LogEntry]:
+        """Parse single log line"""
+        match = self.PATTERNS['timestamp_level'].match(line)
+        if match:
+            timestamp, level_str, component, message = match.groups()
+            try:
+                level = LogLevel[level_str]
+            except KeyError:
+                level = LogLevel.INFO
+
+            return LogEntry(
+                timestamp=float(timestamp),
+                level=level,
+                component=component,
+                message=message.strip(),
+                line_number=line_no
+            )
+        return None
+
+    def get_boot_time(self) -> Optional[float]:
+        """Calculate total boot time"""
+        if self.entries:
+            return self.entries[-1].timestamp - self.entries[0].timestamp
+        return None
+
+    def get_errors_by_component(self) -> Dict[str, List[LogEntry]]:
+        """Group errors by component"""
+        result: Dict[str, List[LogEntry]] = {}
+        for error in self.errors:
+            if error.component not in result:
+                result[error.component] = []
+            result[error.component].append(error)
+        return result
+
+    def find_pattern(self, pattern: str) -> List[LogEntry]:
+        """Find all entries matching regex pattern"""
+        regex = re.compile(pattern, re.IGNORECASE)
+        return [e for e in self.entries if regex.search(e.message)]
+
+# Usage
+analyzer = FirmwareLogAnalyzer()
+analyzer.parse_file('firmware_boot.log')
+
+print(f"Boot time: {analyzer.get_boot_time():.2f}s")
+print(f"Total errors: {len(analyzer.errors)}")
+
+# Group errors
+error_groups = analyzer.get_errors_by_component()
+for component, errors in error_groups.items():
+    print(f"\n{component}: {len(errors)} errors")
+    for e in errors[:3]:  # Show first 3
+        print(f"  Line {e.line_number}: {e.message}")
+
+# Find specific patterns
+ddr_entries = analyzer.find_pattern(r'DDR.*training')
+print(f"\nDDR training entries: {len(ddr_entries)}")
+                    </pre>
+                </div>
+
+                <h4>Subprocess Management for Simulation</h4>
+                <div class="code-example">
+                    <pre>
+import subprocess
+import threading
+import queue
+import time
+from typing import Optional, Callable
+
+class SimulatorRunner:
+    """Manage simulator process with real-time output capture"""
+
+    def __init__(self, command: list, timeout: int = 3600):
+        self.command = command
+        self.timeout = timeout
+        self.process: Optional[subprocess.Popen] = None
+        self.stdout_queue = queue.Queue()
+        self.stderr_queue = queue.Queue()
+
+    def _enqueue_output(self, pipe, q):
+        """Read output from pipe and put in queue"""
+        for line in iter(pipe.readline, b''):
+            q.put(line.decode('utf-8'))
+        pipe.close()
+
+    def run(self, output_callback: Optional[Callable] = None) -> int:
+        """Run simulator and capture output"""
+        self.process = subprocess.Popen(
+            self.command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            bufsize=1
+        )
+
+        # Start threads to read stdout/stderr
+        stdout_thread = threading.Thread(
+            target=self._enqueue_output,
+            args=(self.process.stdout, self.stdout_queue)
+        )
+        stderr_thread = threading.Thread(
+            target=self._enqueue_output,
+            args=(self.process.stderr, self.stderr_queue)
+        )
+
+        stdout_thread.daemon = True
+        stderr_thread.daemon = True
+        stdout_thread.start()
+        stderr_thread.start()
+
+        # Monitor process with timeout
+        start_time = time.time()
+        while True:
+            # Check for output
+            try:
+                line = self.stdout_queue.get_nowait()
+                if output_callback:
+                    output_callback(line.rstrip())
+            except queue.Empty:
+                pass
+
+            # Check if process finished
+            retcode = self.process.poll()
+            if retcode is not None:
+                return retcode
+
+            # Check timeout
+            if time.time() - start_time > self.timeout:
+                self.process.kill()
+                raise TimeoutError(f"Simulation timeout after {self.timeout}s")
+
+            time.sleep(0.1)
+
+    def send_command(self, cmd: str):
+        """Send command to simulator stdin"""
+        if self.process:
+            self.process.stdin.write(f"{cmd}\n".encode())
+            self.process.stdin.flush()
+
+# Usage
+def handle_output(line):
+    print(f"SIM: {line}")
+    # Check for errors
+    if "ERROR" in line:
+        # Handle error
+
+runner = SimulatorRunner(
+    command=['./simulator', '--config', 'test.cfg'],
+    timeout=1800  # 30 minutes
+)
+
+try:
+    returncode = runner.run(output_callback=handle_output)
+    print(f"Simulation completed with return code: {returncode}")
+except TimeoutError as e:
+    print(f"Simulation timed out: {e}")
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>C/C++ Advanced Topics for Firmware</h3>
+
+                <h4>Working with Packed Structures</h4>
+                <div class="code-example">
+                    <pre>
+// Hardware descriptor structures must match hardware layout exactly
+#pragma pack(push, 1)  // No padding between fields
+
+struct pci_config_header {
+    uint16_t vendor_id;
+    uint16_t device_id;
+    uint16_t command;
+    uint16_t status;
+    uint8_t  revision_id;
+    uint8_t  prog_if;
+    uint8_t  subclass;
+    uint8_t  class_code;
+    uint8_t  cache_line_size;
+    uint8_t  latency_timer;
+    uint8_t  header_type;
+    uint8_t  bist;
+    uint32_t bar[6];
+    uint32_t cardbus_cis_ptr;
+    uint16_t subsystem_vendor_id;
+    uint16_t subsystem_id;
+    uint32_t expansion_rom_base;
+    uint8_t  capabilities_ptr;
+    uint8_t  reserved[7];
+    uint8_t  interrupt_line;
+    uint8_t  interrupt_pin;
+    uint8_t  min_grant;
+    uint8_t  max_latency;
+} __attribute__((packed));
+
+#pragma pack(pop)
+
+// Verify structure size matches hardware expectation
+static_assert(sizeof(struct pci_config_header) == 64,
+              "PCI config header must be 64 bytes");
+
+// Reading from hardware
+volatile struct pci_config_header *pci_dev =
+    (struct pci_config_header *)0xF8000000;
+
+uint16_t vendor = pci_dev->vendor_id;
+uint16_t device = pci_dev->device_id;
+
+printf("PCI Device: %04x:%04x\n", vendor, device);
+                    </pre>
+                </div>
+
+                <h4>Memory Barriers for Hardware Synchronization</h4>
+                <div class="code-example">
+                    <pre>
+// Memory barriers ensure correct ordering of memory operations
+
+// Compiler barrier - prevents compiler reordering
+#define barrier() __asm__ __volatile__("" ::: "memory")
+
+// Full memory barrier (x86)
+#define mb()     __asm__ __volatile__("mfence" ::: "memory")
+#define rmb()    __asm__ __volatile__("lfence" ::: "memory")  // Read
+#define wmb()    __asm__ __volatile__("sfence" ::: "memory")  // Write
+
+// Example: DMA descriptor setup
+void setup_dma_transfer(volatile struct dma_descriptor *desc,
+                       void *buffer, size_t length) {
+    // Setup descriptor fields
+    desc->buffer_addr = (uint64_t)buffer;
+    desc->length = length;
+    desc->flags = DMA_FLAG_READY;
+
+    // CRITICAL: Ensure descriptor writes complete before triggering DMA
+    wmb();  // Write memory barrier
+
+    // Trigger DMA engine
+    *DMA_CONTROL_REG = DMA_CMD_START;
+}
+
+// Example: Reading hardware status
+uint32_t wait_for_ready() {
+    uint32_t status;
+
+    while (1) {
+        status = *HW_STATUS_REG;
+
+        // Ensure read completes before checking value
+        rmb();
+
+        if (status & STATUS_READY)
+            break;
+
+        udelay(10);
+    }
+
+    return status;
+}
+                    </pre>
+                </div>
+
+                <h4>Endianness Conversion Helpers</h4>
+                <div class="code-example">
+                    <pre>
+#include <stdint.h>
+
+// Byte swap functions
+static inline uint16_t bswap_16(uint16_t x) {
+    return ((x & 0x00FF) << 8) |
+           ((x & 0xFF00) >> 8);
+}
+
+static inline uint32_t bswap_32(uint32_t x) {
+    return ((x & 0x000000FF) << 24) |
+           ((x & 0x0000FF00) << 8) |
+           ((x & 0x00FF0000) >> 8) |
+           ((x & 0xFF000000) >> 24);
+}
+
+static inline uint64_t bswap_64(uint64_t x) {
+    return ((x & 0x00000000000000FFULL) << 56) |
+           ((x & 0x000000000000FF00ULL) << 40) |
+           ((x & 0x0000000000FF0000ULL) << 24) |
+           ((x & 0x00000000FF000000ULL) << 8) |
+           ((x & 0x000000FF00000000ULL) >> 8) |
+           ((x & 0x0000FF0000000000ULL) >> 24) |
+           ((x & 0x00FF000000000000ULL) >> 40) |
+           ((x & 0xFF00000000000000ULL) >> 56);
+}
+
+// Convert between CPU and big-endian
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    #define cpu_to_be16(x) bswap_16(x)
+    #define cpu_to_be32(x) bswap_32(x)
+    #define be16_to_cpu(x) bswap_16(x)
+    #define be32_to_cpu(x) bswap_32(x)
+#else
+    #define cpu_to_be16(x) (x)
+    #define cpu_to_be32(x) (x)
+    #define be16_to_cpu(x) (x)
+    #define be32_to_cpu(x) (x)
+#endif
+
+// Example usage: Reading big-endian data from flash
+uint32_t read_flash_config() {
+    uint32_t config_be = *(volatile uint32_t *)FLASH_CONFIG_ADDR;
+    return be32_to_cpu(config_be);  // Convert to CPU byte order
+}
+
+// Writing to big-endian network protocol
+void send_packet(uint16_t packet_id, uint32_t data) {
+    struct network_header *hdr = get_tx_buffer();
+    hdr->packet_id = cpu_to_be16(packet_id);
+    hdr->data = cpu_to_be32(data);
+    transmit_packet(hdr);
+}
+                    </pre>
+                </div>
+
+                <h4>Atomic Operations for Shared State</h4>
+                <div class="code-example">
+                    <pre>
+#include <stdatomic.h>
+
+// Shared state accessed by multiple cores or ISRs
+atomic_int pending_interrupts = ATOMIC_VAR_INIT(0);
+atomic_bool dma_busy = ATOMIC_VAR_INIT(false);
+
+// Interrupt handler
+void timer_isr(void) {
+    // Atomically increment counter
+    atomic_fetch_add(&pending_interrupts, 1);
+}
+
+// Main code
+void process_interrupts(void) {
+    int count = atomic_exchange(&pending_interrupts, 0);
+    for (int i = 0; i < count; i++) {
+        handle_timer_event();
+    }
+}
+
+// Check-and-set pattern
+bool start_dma_if_idle(void) {
+    bool expected = false;
+    // Atomically check if idle and set to busy
+    if (atomic_compare_exchange_strong(&dma_busy, &expected, true)) {
+        // We got it! Start DMA
+        setup_dma_transfer();
+        return true;
+    }
+    return false;  // Already busy
+}
+
+void dma_complete_isr(void) {
+    // Mark DMA as idle
+    atomic_store(&dma_busy, false);
+}
+                    </pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="topic-section">
+            <div class="card">
+                <h3>Bash Advanced Scripting Patterns</h3>
+
+                <h4>Error Handling and Logging</h4>
+                <div class="code-example">
+                    <pre>
+#!/bin/bash
+# Advanced error handling template
+
+set -euo pipefail  # Exit on error, undefined vars, pipe failures
+
+# Script metadata
+SCRIPT_NAME=$(basename "$0")
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+LOG_FILE="$SCRIPT_DIR/logs/$(date +%Y%m%d_%H%M%S).log"
+
+# Create log directory
+mkdir -p "$(dirname "$LOG_FILE")"
+
+# Logging functions
+log() {
+    local level=$1
+    shift
+    local message="$*"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    echo "[$timestamp] [$level] $message" | tee -a "$LOG_FILE"
+}
+
+log_info()  { log "INFO"  "$@"; }
+log_warn()  { log "WARN"  "$@"; }
+log_error() { log "ERROR" "$@"; }
+log_fatal() { log "FATAL" "$@"; exit 1; }
+
+# Cleanup on exit
+cleanup() {
+    local exit_code=$?
+    if [ $exit_code -ne 0 ]; then
+        log_error "Script failed with exit code $exit_code"
+    fi
+    # Cleanup resources
+    rm -f /tmp/$$_*
+}
+trap cleanup EXIT
+
+# Error handler
+error_handler() {
+    local line_no=$1
+    log_fatal "Error on line $line_no"
+}
+trap 'error_handler $LINENO' ERR
+
+# Main script
+log_info "Starting $SCRIPT_NAME"
+
+# Run commands with error checking
+if ! command -v simulator &>/dev/null; then
+    log_fatal "Simulator not found in PATH"
+fi
+
+log_info "Running simulation..."
+if ./simulator --config test.cfg; then
+    log_info "Simulation passed"
+else
+    log_error "Simulation failed"
+    exit 1
+fi
+
+log_info "Script completed successfully"
+                    </pre>
+                </div>
+
+                <h4>Parallel Execution with Job Control</h4>
+                <div class="code-example">
+                    <pre>
+#!/bin/bash
+# Run multiple tests in parallel with proper job control
+
+MAX_JOBS=4
+declare -A job_pids
+declare -A job_status
+
+# Function to run a single test
+run_test() {
+    local test_name=$1
+    local log_file="logs/${test_name}.log"
+
+    echo "Starting $test_name..."
+    if ./run_test.sh "$test_name" > "$log_file" 2>&1; then
+        echo "✓ $test_name PASSED"
+        return 0
+    else
+        echo "✗ $test_name FAILED (see $log_file)"
+        return 1
+    fi
+}
+
+# Start a job in background
+start_job() {
+    local test_name=$1
+
+    run_test "$test_name" &
+    local pid=$!
+    job_pids["$test_name"]=$pid
+    job_status["$test_name"]="running"
+}
+
+# Wait for running jobs to finish
+wait_for_slot() {
+    while [ $(jobs -r | wc -l) -ge $MAX_JOBS ]; do
+        # Check for completed jobs
+        for test_name in "${!job_pids[@]}"; do
+            local pid=${job_pids["$test_name"]}
+            if ! kill -0 $pid 2>/dev/null; then
+                # Job finished
+                wait $pid
+                local status=$?
+                if [ $status -eq 0 ]; then
+                    job_status["$test_name"]="passed"
+                else
+                    job_status["$test_name"]="failed"
+                fi
+            fi
+        done
+        sleep 0.5
+    done
+}
+
+# Run all tests
+tests=(test_boot test_ddr test_pcie test_usb test_sata test_secure_boot)
+
+for test in "${tests[@]}"; do
+    wait_for_slot
+    start_job "$test"
+done
+
+# Wait for all jobs to complete
+wait
+
+# Report results
+echo "====== Test Results ======"
+passed=0
+failed=0
+for test in "${tests[@]}"; do
+    status=${job_status["$test"]}
+    echo "$test: $status"
+    if [ "$status" = "passed" ]; then
+        ((passed++))
+    else
+        ((failed++))
+    fi
+done
+
+echo "Passed: $passed, Failed: $failed"
+exit $failed
+                    </pre>
+                </div>
+            </div>
+        </section>
+
         <section class="qa-section">
             <h2>Common Q&A</h2>
             <div class="card">
